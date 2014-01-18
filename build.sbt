@@ -1,0 +1,21 @@
+scalaVersion := "2.10.2"
+
+name := "Human-Task-Manager"
+
+version := "1.0-SNAPSHOT"
+
+libraryDependencies ++= Seq(
+  cache,
+  "com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full,
+  "org.eligosource" %% "eventsourced-core" % "0.6.0",
+  "org.eligosource" %% "eventsourced-journal-leveldb" % "0.6.0",
+  "org.eligosource" %% "eventsourced-journal-inmem" % "0.6.0"
+)
+
+resolvers += "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/"
+
+resolvers += "Eligosource Releases" at "http://repo.eligotech.com/nexus/content/repositories/eligosource-releases"
+
+play.Project.playScalaSettings
+
+scalariformSettings
