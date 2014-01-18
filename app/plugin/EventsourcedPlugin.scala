@@ -9,13 +9,13 @@ import play.api.Application
 
 class EventsourcedPlugin(app: Application) extends Plugin {
 
-  var eventsourcedExtension: Option[EventsourcingExtension] = None
+  var eventsourcedExtension: EventsourcingExtension = _
 
   override def onStart() {
     implicit val system = Akka.system(app)
     val journal: ActorRef = Journal(InmemJournalProps())
     val extension: EventsourcingExtension = EventsourcingExtension(system, journal)
-    eventsourcedExtension = Some(extension)
+    eventsourcedExtension = extension
   }
 
 }

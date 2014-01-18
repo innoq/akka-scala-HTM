@@ -7,6 +7,7 @@ version := "1.0-SNAPSHOT"
 libraryDependencies ++= Seq(
   cache,
   "com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full,
+  "com.softwaremill.macwire" %% "macros" % "0.5",
   "org.eligosource" %% "eventsourced-core" % "0.6.0",
   "org.eligosource" %% "eventsourced-journal-leveldb" % "0.6.0",
   "org.eligosource" %% "eventsourced-journal-inmem" % "0.6.0"
