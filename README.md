@@ -8,6 +8,7 @@ Akka/Scala flavoured Human-Task-Manager
 - Clone repo
 - run SBT via the CLI (command `sbt`)
 - enter `idea` oder `eclipse` for IDE integration
+- install [IDEA](http://www.jetbrains.com/idea/features/scala.html) or [Eclipse](http://scala-ide.org/) plugin
 
 ### Run
 - `sbt run`
