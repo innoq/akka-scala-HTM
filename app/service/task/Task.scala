@@ -26,13 +26,13 @@ class Task extends Actor with FSM[TaskState, Data] {
   when(InProgress) {
     case Event(Complete(result), ClaimedData(input, userId)) =>
       goto(Completed) using CompletedData(input, userId, result)
-    case Event(Stop, data) =>
-      goto(Reserved) using data
+    case Event(Stop, _) =>
+      goto(Reserved)
   }
 
   whenUnhandled {
     case Event(Skip, _) =>
-      goto(Obsolete)
+      goto(Obsolete) using EmptyData
   }
 
   initialize()
