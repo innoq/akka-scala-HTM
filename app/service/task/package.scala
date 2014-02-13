@@ -16,6 +16,7 @@ package object task {
   case class InitialData(input: TaskData) extends Data
   case class ClaimedData(input: TaskData, assigneeId: String) extends Data
   case class CompletedData(input: TaskData, assigneeId: String, result: TaskData) extends Data
+  case object EmptyData extends Data
 
   type TaskData = Map[String, String]
 
