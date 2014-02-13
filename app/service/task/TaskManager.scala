@@ -1,6 +1,6 @@
 package service.task
 
-import akka.actor.{ ActorRef, Actor }
+import akka.actor.{ ActorRef, Actor, Props }
 import java.util.UUID
 
 class TaskManager extends Actor {
@@ -22,4 +22,8 @@ class TaskManager extends Actor {
       }
     }
   }
+}
+
+object TaskManager {
+  def props() = Props[TaskManager]
 }
