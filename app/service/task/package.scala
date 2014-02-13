@@ -3,12 +3,18 @@ package service
 package object task {
 
   // states:
-  private sealed trait TaskState
-  private case object Ready extends TaskState
-  private case object Reserved extends TaskState
-  private case object InProgress extends TaskState
-  private case object Completed extends TaskState
-  private case object Obsolete extends TaskState
+  private[task] sealed trait TaskState
+  private[task] case object Created extends TaskState
+  private[task] case object Ready extends TaskState
+  private[task] case object Reserved extends TaskState
+  private[task] case object InProgress extends TaskState
+  private[task] case object Completed extends TaskState
+  private[task] case object Obsolete extends TaskState
+
+  private[task] sealed trait Data
+  case object Uninitialized extends Data
+  case class InitialData(input: TaskData) extends Data
+  case class Claimed(input: TaskData, assigneeId: String) extends Data
 
   type TaskData = Map[String, String]
 
