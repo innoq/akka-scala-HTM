@@ -41,7 +41,7 @@ class TaskStateSpec extends Specification {
       actorRef ! Init(Map("test" -> "1"))
       actorRef ! Claim("tobias")
       actorRef ! Skip
-      actorRef.underlyingActor.stateData === Map.empty
+      actorRef.underlyingActor.stateData === EmptyData
       actorRef.underlyingActor.stateName === Obsolete
     }
   }

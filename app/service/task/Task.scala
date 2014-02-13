@@ -1,8 +1,8 @@
 package service.task
 
-import akka.actor.{ FSM, Actor }
+import akka.actor.{ ActorLogging, FSM, Actor }
 
-class Task extends Actor with FSM[TaskState, Data] {
+class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
 
   startWith(Created, UninitializedData)
 
@@ -30,9 +30,19 @@ class Task extends Actor with FSM[TaskState, Data] {
       goto(Reserved)
   }
 
+  when(Obsolete) {
+    case _ => stay()
+  }
+
+  when(Completed) {
+    case _ => stay()
+  }
+
   whenUnhandled {
-    case Event(Skip, _) =>
+    case Event(Skip, _) => {
+      log.info("call skip")
       goto(Obsolete) using EmptyData
+    }
   }
 
   initialize()
