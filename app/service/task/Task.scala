@@ -7,14 +7,13 @@ class Task extends Actor with FSM[TaskState, Data] {
   startWith(Created, UninitializedData)
 
   when(Created) {
-    case Event(Init(input), data) => goto(Ready) using InitialData(input)
+    case Event(Init(input), data) =>
+      goto(Ready) using InitialData(input)
   }
 
   when(Ready) {
     case Event(Claim(userId), InitialData(input)) =>
       goto(Reserved) using ClaimedData(input, userId)
-    case Event(Skip, _) =>
-      goto(Obsolete)
   }
 
   when(Reserved) {
@@ -22,8 +21,6 @@ class Task extends Actor with FSM[TaskState, Data] {
       goto(InProgress) using data
     case Event(Release, ClaimedData(input, _)) =>
       goto(Ready) using InitialData(input)
-    case Event(Skip, _) =>
-      goto(Obsolete)
   }
 
   when(InProgress) {
@@ -31,6 +28,9 @@ class Task extends Actor with FSM[TaskState, Data] {
       goto(Completed) using CompletedData(input, userId, result)
     case Event(Stop, data) =>
       goto(Reserved) using data
+  }
+
+  whenUnhandled {
     case Event(Skip, _) =>
       goto(Obsolete)
   }
