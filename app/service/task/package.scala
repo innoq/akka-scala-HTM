@@ -2,6 +2,16 @@ package service
 
 package object task {
 
+  // TaskManager
+  // commands
+  sealed trait TaskManagerCommands
+  case class CreateTask(input: TaskData) extends TaskManagerCommands
+  case class TaskCommand(taskId: String, command: Command) extends TaskManagerCommands
+
+  // events
+  sealed trait TaskManagerEvents
+  case class NoSuchTask(id: String)
+
   // states:
   private[task] sealed trait TaskState
   private[task] case object Created extends TaskState
@@ -11,18 +21,20 @@ package object task {
   private[task] case object Completed extends TaskState
   private[task] case object Obsolete extends TaskState
 
-  private[task] sealed trait Data
-  case object UninitializedData extends Data
-  case class InitialData(input: TaskData) extends Data
-  case class ClaimedData(input: TaskData, assigneeId: String) extends Data
-  case class CompletedData(input: TaskData, assigneeId: String, result: TaskData) extends Data
-  case object EmptyData extends Data
+  private[task] sealed abstract class Data {
+    def taskId: String
+  }
+  case class UninitializedData(taskId: String) extends Data
+  case class InitialData(taskId: String, input: TaskData) extends Data
+  case class ClaimedData(taskId: String, input: TaskData, assigneeId: String) extends Data
+  case class CompletedData(taskId: String, input: TaskData, assigneeId: String, result: TaskData) extends Data
+  case class EmptyData(taskId: String) extends Data
 
   type TaskData = Map[String, String]
 
   // commands:
   sealed trait Command
-  case class Init(input: TaskData = Map.empty)
+  case class Init(taskId: String, input: TaskData = Map.empty)
   case class Claim(userId: String) extends Command
   case object Release extends Command
   case object Start extends Command

@@ -21,27 +21,27 @@ class TaskStateSpec extends Specification {
   "A uninitialized task" should {
     "accept an init message which changes the state" in {
       val actorRef = TestActorRef[Task]
-      actorRef ! Init(Map("test" -> "1"))
-      actorRef.underlyingActor.stateData === InitialData(Map("test" -> "1"))
+      actorRef ! Init("1", Map("test" -> "1"))
+      actorRef.underlyingActor.stateData === InitialData("1", Map("test" -> "1"))
       actorRef.underlyingActor.stateName === Ready
     }
   }
   "A created task" should {
     "accept a claim event which assings the task to a user" in {
       val actorRef = TestActorRef[Task]
-      actorRef ! Init(Map("test" -> "1"))
+      actorRef ! Init("1", Map("test" -> "1"))
       actorRef ! Claim("tobias")
-      actorRef.underlyingActor.stateData === ClaimedData(Map("test" -> "1"), "tobias")
+      actorRef.underlyingActor.stateData === ClaimedData("1", Map("test" -> "1"), "tobias")
       actorRef.underlyingActor.stateName === Reserved
     }
   }
   "A reserved task" should {
     "can be skipped" in {
       val actorRef = TestActorRef[Task]
-      actorRef ! Init(Map("test" -> "1"))
+      actorRef ! Init("1", Map("test" -> "1"))
       actorRef ! Claim("tobias")
       actorRef ! Skip
-      actorRef.underlyingActor.stateData === EmptyData
+      actorRef.underlyingActor.stateData === EmptyData("1")
       actorRef.underlyingActor.stateName === Obsolete
     }
   }

@@ -7,30 +7,30 @@ import akka.actor.{ ActorLogging, FSM, Actor, Props }
 
 class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
 
-  startWith(Created, UninitializedData)
+  startWith(Created, UninitializedData(""))
 
   when(Created) {
-    case Event(Init(input), data) =>
-      goto(Ready) using InitialData(input) replying TaskInitialized(input)
+    case Event(Init(taskId, input), data) =>
+      goto(Ready) using InitialData(taskId, input) replying TaskInitialized(input, taskId)
   }
 
   when(Ready) {
-    case Event(Claim(userId), InitialData(input)) =>
-      goto(Reserved) using ClaimedData(input, userId) replying TaskClaimed
+    case Event(Claim(userId), InitialData(taskId, input)) =>
+      goto(Reserved) using ClaimedData(taskId, input, userId) replying TaskClaimed(userId, taskId)
   }
 
   when(Reserved) {
     case Event(Start, data) =>
       goto(InProgress) using data replying TaskStarted
-    case Event(Release, ClaimedData(input, _)) =>
-      goto(Ready) using InitialData(input) replying TaskReleased
+    case Event(Release, ClaimedData(taskId, input, _)) =>
+      goto(Ready) using InitialData(taskId, input) replying TaskReleased(taskId)
   }
 
   when(InProgress) {
-    case Event(Complete(result), ClaimedData(input, userId)) =>
-      goto(Completed) using CompletedData(input, userId, result) replying TaskCompleted(result)
-    case Event(Stop, _) =>
-      goto(Reserved) replying TaskStopped
+    case Event(Complete(result), ClaimedData(taskId, input, userId)) =>
+      goto(Completed) using CompletedData(taskId, input, userId, result) replying TaskCompleted(result, taskId)
+    case Event(Stop, d) =>
+      goto(Reserved) replying TaskStopped(d.taskId)
   }
 
   when(Obsolete) {
@@ -42,10 +42,10 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   }
 
   whenUnhandled {
-    case Event(Skip, _) =>
-      goto(Obsolete) using EmptyData replying TaskSkipped
-    case Event(cmd: Command, _) =>
-      stay replying InvalidCommandRejected(cmd, stateName)
+    case Event(Skip, d) =>
+      goto(Obsolete) using EmptyData(d.taskId) replying TaskSkipped(d.taskId)
+    case Event(cmd: Command, data) =>
+      stay replying InvalidCommandRejected(cmd, stateName, data.taskId)
   }
 
   initialize()
@@ -57,13 +57,14 @@ object Task {
   def props() = Props[Task]
 
   object Protocol {
-    case class TaskInitialized(input: TaskData)
-    case class TaskClaimed(assigneeId: String)
-    case object TaskStarted
-    case object TaskReleased
-    case class TaskCompleted(result: TaskData)
-    case object TaskStopped
-    case object TaskSkipped
-    case class InvalidCommandRejected(cmd: Command, state: TaskState)
+    sealed abstract class TaskEvent(val taskId: String)
+    case class TaskInitialized(input: TaskData, taskid: String) extends TaskEvent(taskid)
+    case class TaskClaimed(assigneeId: String, taskid: String) extends TaskEvent(taskid)
+    case class TaskStarted(taskid: String) extends TaskEvent(taskid)
+    case class TaskReleased(taskid: String) extends TaskEvent(taskid)
+    case class TaskCompleted(result: TaskData, taskid: String) extends TaskEvent(taskid)
+    case class TaskStopped(taskid: String) extends TaskEvent(taskid)
+    case class TaskSkipped(taskid: String) extends TaskEvent(taskid)
+    case class InvalidCommandRejected(cmd: Command, state: TaskState, taskid: String) extends TaskEvent(taskid)
   }
 }
