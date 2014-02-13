@@ -1,11 +1,11 @@
 package service.task
 
-import akka.actor.{ Props, FSM, Actor }
 import service.task.Task.Protocol._
 import service.task.Task.Protocol.TaskClaimed
 import service.task.Task.Protocol.TaskInitialized
+import akka.actor.{ ActorLogging, FSM, Actor, Props }
 
-class Task extends Actor with FSM[TaskState, Data] {
+class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
 
   startWith(Created, UninitializedData)
 
@@ -31,6 +31,14 @@ class Task extends Actor with FSM[TaskState, Data] {
       goto(Completed) using CompletedData(input, userId, result) replying TaskCompleted(result)
     case Event(Stop, _) =>
       goto(Reserved) replying TaskStopped
+  }
+
+  when(Obsolete) {
+    case _ => stay()
+  }
+
+  when(Completed) {
+    case _ => stay()
   }
 
   whenUnhandled {
