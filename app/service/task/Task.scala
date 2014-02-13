@@ -48,6 +48,10 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
       stay replying InvalidCommandRejected(cmd, stateName, data.taskId)
   }
 
+  onTransition {
+    case e => log.debug("transition => $e")
+  }
+
   initialize()
 
 }
