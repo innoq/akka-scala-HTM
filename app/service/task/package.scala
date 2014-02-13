@@ -12,9 +12,10 @@ package object task {
   private[task] case object Obsolete extends TaskState
 
   private[task] sealed trait Data
-  case object Uninitialized extends Data
+  case object UninitializedData extends Data
   case class InitialData(input: TaskData) extends Data
-  case class Claimed(input: TaskData, assigneeId: String) extends Data
+  case class ClaimedData(input: TaskData, assigneeId: String) extends Data
+  case class CompletedData(input: TaskData, assigneeId: String, result: TaskData) extends Data
 
   type TaskData = Map[String, String]
 
