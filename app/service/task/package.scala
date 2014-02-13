@@ -3,13 +3,13 @@ package service
 package object task {
 
   // states:
-  private[task] sealed trait TaskState
-  private[task] case object Created extends TaskState
-  private[task] case object Ready extends TaskState
-  private[task] case object Reserved extends TaskState
-  private[task] case object InProgress extends TaskState
-  private[task] case object Completed extends TaskState
-  private[task] case object Obsolete extends TaskState
+  sealed trait TaskState
+  case object Created extends TaskState
+  case object Ready extends TaskState
+  case object Reserved extends TaskState
+  case object InProgress extends TaskState
+  case object Completed extends TaskState
+  case object Obsolete extends TaskState
 
   private[task] sealed trait Data
   case object UninitializedData extends Data
