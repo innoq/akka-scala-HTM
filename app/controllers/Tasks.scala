@@ -51,7 +51,8 @@ object Tasks extends Controller {
     Json.toJson(Map("tasks" -> tasks))
   }
 
-  def list(userId: String) = Action.async { request =>
+  def list(userIdParam: String) = Action.async { request =>
+    val userId = if (userIdParam == "-1") None else Some(userIdParam)
     val manager = Akka.system.actorSelection("/user/TaskListReadModelManager")
     val result = ask(manager, GetTaskList(userId))(2 seconds).mapTo[TaskList]
     val taskReplies = result.map(toJson)
