@@ -23,7 +23,7 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with ActorLo
     case GetTaskList(userId) => {
       val taskViews = model.values.toVector
       val filteredTaskViews = userId match {
-        case None => Future.successful(TaskList(taskViews))
+        case None => Future.successful(Right(TaskList(taskViews)))
         case Some(userId) => {
           val filteredTasks = ask(orgServer, FilterTasks(userId, taskViews))(2.seconds)
           filteredTasks.map {
