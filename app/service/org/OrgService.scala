@@ -26,7 +26,11 @@ class OrgService extends Actor {
       import context.dispatcher
       import akka.pattern.pipe
       val responseF = breaker withCircuitBreaker {
-        WS.url("http://10.100.100.172:3001/org").put(buildRequest(userId, tasks))
+        implicit val success = new retry.Success[Response](_.status == 200)
+        import retry.Defaults._
+        retry.Directly(3) { () =>
+          WS.url("http://10.100.100.172:3001/org").put(buildRequest(userId, tasks))
+        }
       }
       responseF map responseToFilteredTasks(userId) recover {
         case e: CircuitBreakerOpenException => OrgServiceUnreachable
@@ -35,7 +39,6 @@ class OrgService extends Actor {
 
   private def responseToFilteredTasks(userId: String)(resp: Response): FilteredTasks = {
     import OrgService._
-    println(resp.body)
     val r = resp.json.as[OrgResponse](orgResponseReads)
     FilteredTasks(userId, r.tasks)
   }

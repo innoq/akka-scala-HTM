@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(
   "com.softwaremill.macwire" %% "macros" % "0.5",
   "org.eligosource" %% "eventsourced-core" % "0.6.0",
   "org.eligosource" %% "eventsourced-journal-leveldb" % "0.6.0",
-  "org.eligosource" %% "eventsourced-journal-inmem" % "0.6.0"
+  "org.eligosource" %% "eventsourced-journal-inmem" % "0.6.0",
+  "me.lessis" %% "retry-core" % "0.1.0"
 )
 
 resolvers += "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/"
