@@ -27,5 +27,10 @@ class TaskManager extends Actor with ActorLogging {
 }
 
 object TaskManager {
+
+  val actorName = "TaskManager"
+
+  def actorPath = s"/user/$actorName"
+
   def props() = Props[TaskManager]
 }

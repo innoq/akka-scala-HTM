@@ -67,6 +67,10 @@ class OrgService extends Actor with ActorLogging {
 
 object OrgService {
 
+  val actorName = "OrgService"
+
+  def actorPath = s"/user/$actorName"
+
   def props(): Props = Props[OrgService]
 
   private[org] case class OrgResponse(tasks: Vector[FilteredTask])

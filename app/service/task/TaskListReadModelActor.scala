@@ -39,6 +39,10 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with ActorLo
 
 object TaskListReadModelActor {
 
+  val actorName = "TaskListReadModelManager"
+
+  def actorPath = s"/user/$actorName"
+
   def props(orgServer: ActorRef) = Props(classOf[TaskListReadModelActor], orgServer)
 
   object Protocol {

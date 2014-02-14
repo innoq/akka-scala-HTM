@@ -66,7 +66,6 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
 }
 
 object Task {
-
   def props() = Props[Task]
 
   object Protocol {

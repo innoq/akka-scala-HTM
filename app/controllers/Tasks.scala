@@ -23,14 +23,14 @@ object Tasks extends Controller with DomainSerializers {
 
   def createTask(task: CreateTask) = {
     Logger.info("new task " + task)
-    val manager = Akka.system.actorSelection("/user/TaskManager")
+    val manager = Akka.system.actorSelection(TaskManager.actorPath)
     val result = ask(manager, task)(2 seconds).mapTo[TaskInitialized]
     result.map { task => Ok(task.toString()) }
   }
 
   def list(userIdParam: String) = Action.async { request =>
     val userId = if (userIdParam == "-1") None else Some(userIdParam)
-    val manager = Akka.system.actorSelection("/user/TaskListReadModelManager")
+    val manager = Akka.system.actorSelection(TaskListReadModelActor.actorPath)
     val result = ask(manager, GetTaskList(userId))(2 seconds).mapTo[Either[TaskListUnavailable.type, TaskList]]
     result map {
       case Right(taskList) => Ok(toJson(taskList))
