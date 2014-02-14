@@ -25,18 +25,19 @@ object Tasks extends Controller {
     val userId = (task \ "user_id").asOpt[Int]
     val role = (task \ "role").asOpt[String]
     val delegatedUser = (task \ "delegated_user").asOpt[String]
+    val taskType = (task \ "type").as[String]
     val inputAsMap = input.as[JsObject].fields.filter {
       case (_, e: JsString) => true
       case _ => false
     }.map { case (key, value: JsValue) => (key -> value.as[String]) }.toMap
     val manager = Akka.system.actorSelection("/user/TaskManager")
-    val task1: CreateTask = CreateTask(inputAsMap, role, userId.map(_.toString), delegatedUser)
+    val task1: CreateTask = CreateTask(inputAsMap, taskType, role, userId.map(_.toString), delegatedUser)
     Logger.info("new task " + task1)
     val result = ask(manager, task1)(2 seconds).mapTo[TaskInitialized]
     result.map { task => Ok(task.toString()).withHeaders("Access-Control-Allow-Origin" -> "*") }
   }
 
-  case class TaskReply(id: String, output: TaskData, input: TaskData, state: String)
+  case class TaskReply(id: String, output: TaskData, input: TaskData, state: String, `type`: String)
 
   implicit val taskWrites = Json.writes[TaskReply]
 
@@ -46,7 +47,7 @@ object Tasks extends Controller {
         case Ready => "ready"
         case _ => "other"
       }
-      TaskReply(task.id, task.taskData, task.taskData, taskState)
+      TaskReply(task.id, task.taskData, task.taskData, taskState, task.taskType)
     }
     Json.toJson(Map("tasks" -> tasks))
   }

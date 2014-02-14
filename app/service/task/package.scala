@@ -5,7 +5,7 @@ package object task {
   // TaskManager
   // commands
   sealed trait TaskManagerCommands
-  case class CreateTask(input: TaskData, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None) extends TaskManagerCommands
+  case class CreateTask(input: TaskData, taskType: String, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None) extends TaskManagerCommands
   case class TaskCommand(taskId: String, command: Command) extends TaskManagerCommands
 
   // events
@@ -38,7 +38,7 @@ package object task {
 
   // commands:
   sealed trait Command
-  case class Init(taskId: String, input: TaskData = Map.empty, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None)
+  case class Init(taskId: String, taskType: String, input: TaskData = Map.empty, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None)
   case class Claim(userId: String) extends Command
   case object Release extends Command
   case object Start extends Command

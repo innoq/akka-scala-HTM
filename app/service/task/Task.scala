@@ -15,8 +15,8 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   startWith(Created, UninitializedData(""))
 
   when(Created) {
-    case Event(Init(taskId, input, role, userId, delegate), data) => {
-      val taskModel = TaskModelImpl(taskId, role, userId, delegate, input)
+    case Event(Init(taskId, taskType, input, role, userId, delegate), data) => {
+      val taskModel = TaskModelImpl(taskId, taskType, role, userId, delegate, input)
       goto(Ready) using InitialData(taskModel) replying publishing(TaskInitialized(taskModel))
     }
   }
