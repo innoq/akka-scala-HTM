@@ -20,7 +20,7 @@ object Tasks extends Controller {
     import Task.Protocol._
     val task = request.body \ "task"
     val input = task \ "input"
-    val inputAsMap = input.as[JsObject].fields.map { case (key, value) => (key -> value.toString()) }.toMap
+    val inputAsMap = input.as[JsObject].fields.map { case (key, value) => (key -> value.as[String]) }.toMap
     val manager = Akka.system.actorSelection("/user/TaskManager")
     val result = ask(manager, CreateTask(inputAsMap))(2 seconds).mapTo[TaskInitialized]
     result.map { task => Ok(task.toString()) }
