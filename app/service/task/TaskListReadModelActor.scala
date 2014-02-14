@@ -35,7 +35,6 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with ActorLo
       filteredTaskViews pipeTo sender
     }
   }
-
 }
 
 object TaskListReadModelActor {

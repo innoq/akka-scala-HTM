@@ -23,7 +23,7 @@ object Application extends Controller {
   }
 
   def json(implicit request: Request[_]) = {
-    val url = routes.Tasks.createTask.absoluteURL()
+    val url = routes.Tasks.createTaskAction.absoluteURL()
     val json = Json.toJson(
       Map("resources" ->
         Map("tasks" ->

@@ -6,7 +6,7 @@
 GET     /                           controllers.Application.index
 
 # Tasks resource
-POST    /tasks                      controllers.Tasks.createTask
+POST    /tasks                      controllers.Tasks.createTaskAction
 
 GET     /tasks                      controllers.Tasks.list(user_id ?= "-1")
 
