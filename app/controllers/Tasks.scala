@@ -23,7 +23,7 @@ object Tasks extends Controller {
     val inputAsMap = input.as[JsObject].fields.map { case (key, value) => (key -> value.as[String]) }.toMap
     val manager = Akka.system.actorSelection("/user/TaskManager")
     val result = ask(manager, CreateTask(inputAsMap))(2 seconds).mapTo[TaskInitialized]
-    result.map { task => Ok(task.toString()) }
+    result.map { task => Ok(task.toString()).withHeaders("Access-Control-Allow-Origin" -> "*") }
   }
 
   case class TaskReply(id: String, output: TaskData, input: TaskData, state: String)
@@ -45,7 +45,7 @@ object Tasks extends Controller {
     val manager = Akka.system.actorSelection("/user/TaskListReadModelManager")
     val result = ask(manager, GetTaskList)(2 seconds).mapTo[TaskList]
     val taskReplies = result.map(toJson)
-    taskReplies.map(json => Ok(json))
+    taskReplies.map(json => Ok(json).withHeaders("Access-Control-Allow-Origin" -> "*"))
   }
 
 }

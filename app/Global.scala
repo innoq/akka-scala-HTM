@@ -9,4 +9,6 @@ object Global extends GlobalSettings {
     Akka.system.actorOf(TaskManager.props(), name = "TaskManager")
     Akka.system.actorOf(TaskListReadModelActor.props(), name = "TaskListReadModelManager")
   }
+
+
 }

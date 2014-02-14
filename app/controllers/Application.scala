@@ -9,8 +9,8 @@ object Application extends Controller {
 
   def index = Action { implicit request =>
     render {
-      case Accepts.Html() => html
-      case Accepts.Json() => json
+      case Accepts.Html() => html.withHeaders("Access-Control-Allow-Origin" -> "*")
+      case Accepts.Json() => json.withHeaders("Access-Control-Allow-Origin" -> "*")
     }
   }
 
