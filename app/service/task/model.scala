@@ -25,7 +25,7 @@ case class TaskModelImpl(
   delegatedUser: Option[String],
   taskData: TaskData) extends TaskModel
 
-class TaskView(taskModel: TaskModel, val taskState: TaskState) extends TaskModel {
+class TaskView(val taskModel: TaskModel, val taskState: TaskState) extends TaskModel {
   def id = taskModel.id
   def role = taskModel.role
   def userId = taskModel.userId

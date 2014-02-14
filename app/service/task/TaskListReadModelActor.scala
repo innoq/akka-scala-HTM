@@ -16,14 +16,14 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with ActorLo
   var model = Map.empty[String, TaskView]
 
   def receive = {
-    case TaskInitialized(taskData, taskId) => {
-      model = model + (taskId -> new TaskView(TaskModel(id = taskId, taskData = taskData), Ready))
+    case TaskInitialized(taskModel) => {
+      model = model + (taskModel.id -> new TaskView(taskModel, Ready))
     }
     case GetTaskList(userId) => {
       val taskViews = model.values.toVector
       val filteredTasks = ask(orgServer, FilterTasks(userId, taskViews))(2.seconds)
       val filteredTaskViews = filteredTasks.map {
-        case FilteredTasks(_, tasks) => tasks.map { case FilteredTask(id, _) => model(id) }
+        case FilteredTasks(_, tasks) => TaskList(tasks.map { case FilteredTask(id, _) => model(id) })
       }
       filteredTaskViews pipeTo sender
     }

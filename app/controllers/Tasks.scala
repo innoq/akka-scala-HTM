@@ -22,7 +22,7 @@ object Tasks extends Controller {
     import Task.Protocol._
     val task = request.body \ "task"
     val input = task \ "input"
-    val userId = (task \ "user_id").asOpt[String]
+    val userId = (task \ "user_id").asOpt[Int]
     val role = (task \ "role").asOpt[String]
     val delegatedUser = (task \ "delegated_user").asOpt[String]
     val inputAsMap = input.as[JsObject].fields.filter {
@@ -30,7 +30,9 @@ object Tasks extends Controller {
       case _ => false
     }.map { case (key, value: JsValue) => (key -> value.as[String]) }.toMap
     val manager = Akka.system.actorSelection("/user/TaskManager")
-    val result = ask(manager, CreateTask(inputAsMap, role, userId, delegatedUser))(2 seconds).mapTo[TaskInitialized]
+    val task1: CreateTask = CreateTask(inputAsMap, role, userId.map(_.toString), delegatedUser)
+    Logger.info("new task " + task1)
+    val result = ask(manager, task1)(2 seconds).mapTo[TaskInitialized]
     result.map { task => Ok(task.toString()).withHeaders("Access-Control-Allow-Origin" -> "*") }
   }
 
