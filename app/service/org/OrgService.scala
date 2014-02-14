@@ -1,7 +1,7 @@
 package service.org
 
 import akka.actor.{ Props, Actor }
-import service.task.{ FilteredTask, TaskModel }
+import service.task.{ TaskView, FilteredTask, TaskModel }
 import service.org.OrgService.Protocol.{ FilteredTasks, FilterTasks }
 import play.api.libs.ws.{ Response, WS }
 import play.api.libs.json._
@@ -35,17 +35,17 @@ class OrgService extends Actor {
     FilteredTasks(userId, r.tasks)
   }
 
-  private def buildRequest(userId: String, tasks: Vector[TaskModel]): JsObject = {
+  private def buildRequest(userId: String, tasks: Vector[TaskView]): JsObject = {
     Json.obj(
       "user_id" -> userId.toInt,
       "tasks" -> (tasks map taskToJson)
     )
   }
 
-  private def taskToJson(t: TaskModel): JsObject = {
+  private def taskToJson(t: TaskView): JsObject = {
     val fields = Vector(
       "id" -> Some(t.id),
-      "state" -> Some(t.state.toString.toLowerCase),
+      "state" -> Some(t.taskState.toString.toLowerCase),
       "role" -> t.role,
       "user_id" -> t.userId,
       "delegated_user" -> t.delegatedUser
@@ -64,7 +64,7 @@ object OrgService {
   private[org] implicit val orgResponseReads = Json.format[OrgResponse]
 
   object Protocol {
-    case class FilterTasks(userId: String, tasks: Vector[TaskModel])
+    case class FilterTasks(userId: String, tasks: Vector[TaskView])
     case class FilteredTasks(userId: String, tasks: Vector[FilteredTask])
   }
 }
