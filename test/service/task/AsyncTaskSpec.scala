@@ -15,7 +15,7 @@ class AsyncTaskSpec extends TestKit(ActorSystem("test-system")) with Specificati
     "reply with a TaskInitialized event to an Init command" in {
       val task = system.actorOf(Task.props())
       task ! Init("1", Map("foo" -> "bar"))
-      expectMsg(100.millis, TaskInitialized(Map("foo" -> "bar"), "1"))
+      expectMsg(100.millis, TaskInitialized(TaskModel("1", taskData = Map("foo" -> "bar"))))
       true
     }
     "reply with an InvalidCommandRejected event to any other command" in {

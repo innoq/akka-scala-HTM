@@ -54,9 +54,11 @@ object Tasks extends Controller {
   def list(userIdParam: String) = Action.async { request =>
     val userId = if (userIdParam == "-1") None else Some(userIdParam)
     val manager = Akka.system.actorSelection("/user/TaskListReadModelManager")
-    val result = ask(manager, GetTaskList(userId))(2 seconds).mapTo[TaskList]
-    val taskReplies = result.map(toJson)
-    taskReplies.map(json => Ok(json).withHeaders("Access-Control-Allow-Origin" -> "*"))
+    val result = ask(manager, GetTaskList(userId))(2 seconds).mapTo[Either[TaskListUnavailable.type, TaskList]]
+    result map {
+      case Right(taskList) => Ok(toJson(taskList)).withHeaders("Access-Control-Allow-Origin" -> "*")
+      case Left(TaskListUnavailable) => ServiceUnavailable("task list is not available; try again later")
+    }
   }
 
 }
