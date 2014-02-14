@@ -7,30 +7,35 @@ import akka.actor.{ ActorLogging, FSM, Actor, Props }
 
 class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
 
+  def publishing(state: TaskEvent) = {
+    context.system.eventStream.publish(state)
+    state
+  }
+
   startWith(Created, UninitializedData(""))
 
   when(Created) {
     case Event(Init(taskId, input, role, userId, delegate), data) =>
-      goto(Ready) using InitialData(TaskModelImpl(taskId, role, userId, delegate, input)) replying TaskInitialized(input, taskId)
+      goto(Ready) using InitialData(TaskModelImpl(taskId, role, userId, delegate, input)) replying publishing(TaskInitialized(input, taskId))
   }
 
   when(Ready) {
     case Event(Claim(userId), InitialData(taskModel)) =>
-      goto(Reserved) using ClaimedData(taskModel.copy(userId = Some(userId))) replying TaskClaimed(userId, taskModel.id)
+      goto(Reserved) using ClaimedData(taskModel.copy(userId = Some(userId))) replying publishing(TaskClaimed(userId, taskModel.id))
   }
 
   when(Reserved) {
     case Event(Start, data) =>
-      goto(InProgress) replying TaskStarted(data.taskId)
+      goto(InProgress) replying publishing(TaskStarted(data.taskId))
     case Event(Release, ClaimedData(model)) =>
-      goto(Ready) using InitialData(model) replying TaskReleased(model.id)
+      goto(Ready) using InitialData(model) replying publishing(TaskReleased(model.id))
   }
 
   when(InProgress) {
     case Event(Complete(result), ClaimedData(taskData)) =>
-      goto(Completed) using CompletedData(taskData) replying TaskCompleted(result, taskData.id)
+      goto(Completed) using CompletedData(taskData) replying publishing(TaskCompleted(result, taskData.id))
     case Event(Stop, d) =>
-      goto(Reserved) replying TaskStopped(d.taskId)
+      goto(Reserved) replying publishing(TaskStopped(d.taskId))
   }
 
   when(Obsolete) {
@@ -45,7 +50,7 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
     case Event(Skip, d) =>
       goto(Obsolete) using EmptyData(d.taskId) replying TaskSkipped(d.taskId)
     case Event(cmd: Command, data) =>
-      stay replying InvalidCommandRejected(cmd, stateName, data.taskId)
+      stay replying publishing(InvalidCommandRejected(cmd, stateName, data.taskId))
   }
 
   onTransition {
