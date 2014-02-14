@@ -10,25 +10,25 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   startWith(Created, UninitializedData(""))
 
   when(Created) {
-    case Event(Init(taskId, input), data) =>
-      goto(Ready) using InitialData(taskId, input) replying TaskInitialized(input, taskId)
+    case Event(Init(taskId, input, role, userId, delegate), data) =>
+      goto(Ready) using InitialData(TaskModelImpl(taskId, role, userId, delegate, input)) replying TaskInitialized(input, taskId)
   }
 
   when(Ready) {
-    case Event(Claim(userId), InitialData(taskId, input)) =>
-      goto(Reserved) using ClaimedData(taskId, input, userId) replying TaskClaimed(userId, taskId)
+    case Event(Claim(userId), InitialData(taskModel)) =>
+      goto(Reserved) using ClaimedData(taskModel.copy(userId = Some(userId))) replying TaskClaimed(userId, taskModel.id)
   }
 
   when(Reserved) {
     case Event(Start, data) =>
-      goto(InProgress) using data replying TaskStarted
-    case Event(Release, ClaimedData(taskId, input, _)) =>
-      goto(Ready) using InitialData(taskId, input) replying TaskReleased(taskId)
+      goto(InProgress) replying TaskStarted(data.taskId)
+    case Event(Release, ClaimedData(model)) =>
+      goto(Ready) using InitialData(model) replying TaskReleased(model.id)
   }
 
   when(InProgress) {
-    case Event(Complete(result), ClaimedData(taskId, input, userId)) =>
-      goto(Completed) using CompletedData(taskId, input, userId, result) replying TaskCompleted(result, taskId)
+    case Event(Complete(result), ClaimedData(taskData)) =>
+      goto(Completed) using CompletedData(taskData) replying TaskCompleted(result, taskData.id)
     case Event(Stop, d) =>
       goto(Reserved) replying TaskStopped(d.taskId)
   }

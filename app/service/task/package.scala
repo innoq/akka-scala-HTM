@@ -5,7 +5,7 @@ package object task {
   // TaskManager
   // commands
   sealed trait TaskManagerCommands
-  case class CreateTask(input: TaskData) extends TaskManagerCommands
+  case class CreateTask(input: TaskData, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None) extends TaskManagerCommands
   case class TaskCommand(taskId: String, command: Command) extends TaskManagerCommands
 
   // events
@@ -24,17 +24,21 @@ package object task {
   private[task] sealed abstract class Data {
     def taskId: String
   }
+  trait TaskIdDelegate { self: Data =>
+    def taskData: TaskModel
+    def taskId = taskData.id
+  }
   case class UninitializedData(taskId: String) extends Data
-  case class InitialData(taskId: String, input: TaskData) extends Data
-  case class ClaimedData(taskId: String, input: TaskData, assigneeId: String) extends Data
-  case class CompletedData(taskId: String, input: TaskData, assigneeId: String, result: TaskData) extends Data
+  case class InitialData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
+  case class ClaimedData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
+  case class CompletedData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
   case class EmptyData(taskId: String) extends Data
 
   type TaskData = Map[String, String]
 
   // commands:
   sealed trait Command
-  case class Init(taskId: String, input: TaskData = Map.empty)
+  case class Init(taskId: String, input: TaskData = Map.empty, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None)
   case class Claim(userId: String) extends Command
   case object Release extends Command
   case object Start extends Command
