@@ -1,11 +1,12 @@
 package service.org
 
 import akka.actor.{ Props, Actor }
-import service.task.{ TaskView, FilteredTask, TaskModel }
-import service.org.OrgService.Protocol.{ FilteredTasks, FilterTasks }
+import service.task.{ TaskView, FilteredTask }
+import service.org.OrgService.Protocol.{ OrgServiceUnreachable, FilteredTasks, FilterTasks }
 import play.api.libs.ws.{ Response, WS }
 import play.api.libs.json._
 import akka.pattern.CircuitBreaker
+import akka.pattern.CircuitBreakerOpenException
 
 class OrgService extends Actor {
   import concurrent.duration._
@@ -17,20 +18,27 @@ class OrgService extends Actor {
       resetTimeout = 1.minute) onOpen notifyOnOpen
 
   private def notifyOnOpen() = {
-
+    //
   }
 
   def receive = {
     case FilterTasks(userId, tasks) =>
       import context.dispatcher
       import akka.pattern.pipe
-      val responseF = WS.url("http://10.100.100.172:3001/org").put(buildRequest(userId, tasks))
-      responseF map responseToFilteredTasks(userId) pipeTo sender
+      val responseF = breaker withCircuitBreaker {
+        implicit val success = new retry.Success[Response](_.status == 200)
+        import retry.Defaults._
+        retry.Directly(3) { () =>
+          WS.url("http://10.100.100.172:3001/org").put(buildRequest(userId, tasks))
+        }
+      }
+      responseF map responseToFilteredTasks(userId) recover {
+        case e: CircuitBreakerOpenException => OrgServiceUnreachable
+      } pipeTo sender
   }
 
   private def responseToFilteredTasks(userId: String)(resp: Response): FilteredTasks = {
     import OrgService._
-    println(resp.body)
     val r = resp.json.as[OrgResponse](orgResponseReads)
     FilteredTasks(userId, r.tasks)
   }
@@ -66,5 +74,6 @@ object OrgService {
   object Protocol {
     case class FilterTasks(userId: String, tasks: Vector[TaskView])
     case class FilteredTasks(userId: String, tasks: Vector[FilteredTask])
+    case object OrgServiceUnreachable
   }
 }
