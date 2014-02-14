@@ -22,7 +22,7 @@ class TaskStateSpec extends Specification {
     "accept an init message which changes the state" in {
       val actorRef = TestActorRef[Task]
       actorRef ! Init("1", Map("test" -> "1"))
-      actorRef.underlyingActor.stateData === InitialData("1", Map("test" -> "1"))
+      actorRef.underlyingActor.stateData === InitialData(TaskModel.default("1", Map("test" -> "1")))
       actorRef.underlyingActor.stateName === Ready
     }
   }
@@ -31,7 +31,7 @@ class TaskStateSpec extends Specification {
       val actorRef = TestActorRef[Task]
       actorRef ! Init("1", Map("test" -> "1"))
       actorRef ! Claim("tobias")
-      actorRef.underlyingActor.stateData === ClaimedData("1", Map("test" -> "1"), "tobias")
+      actorRef.underlyingActor.stateData === ClaimedData(TaskModel.withUser("1", "tobias", Map("test" -> "1")))
       actorRef.underlyingActor.stateName === Reserved
     }
   }
