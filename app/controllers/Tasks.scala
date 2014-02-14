@@ -12,6 +12,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import service.task.Task.Protocol._
 import service.task.TaskListReadModelActor.Protocol._
 import play.api.libs.json._
+import com.fasterxml.jackson.annotation.JsonValue
+
 // imports required functional generic structures
 
 object Tasks extends Controller {
@@ -20,9 +22,15 @@ object Tasks extends Controller {
     import Task.Protocol._
     val task = request.body \ "task"
     val input = task \ "input"
-    val inputAsMap = input.as[JsObject].fields.map { case (key, value) => (key -> value.as[String]) }.toMap
+    val userId = (task \ "user_id").asOpt[String]
+    val role = (task \ "role").asOpt[String]
+    val delegatedUser = (task \ "delegated_user").asOpt[String]
+    val inputAsMap = input.as[JsObject].fields.filter {
+      case (_, e: JsString) => true
+      case _ => false
+    }.map { case (key, value: JsValue) => (key -> value.as[String]) }.toMap
     val manager = Akka.system.actorSelection("/user/TaskManager")
-    val result = ask(manager, CreateTask(inputAsMap))(2 seconds).mapTo[TaskInitialized]
+    val result = ask(manager, CreateTask(inputAsMap, role, userId, delegatedUser))(2 seconds).mapTo[TaskInitialized]
     result.map { task => Ok(task.toString()).withHeaders("Access-Control-Allow-Origin" -> "*") }
   }
 
@@ -41,9 +49,9 @@ object Tasks extends Controller {
     Json.toJson(Map("tasks" -> tasks))
   }
 
-  def list = Action.async { request =>
+  def list(userId: String) = Action.async { request =>
     val manager = Akka.system.actorSelection("/user/TaskListReadModelManager")
-    val result = ask(manager, GetTaskList)(2 seconds).mapTo[TaskList]
+    val result = ask(manager, GetTaskList(userId))(2 seconds).mapTo[TaskList]
     val taskReplies = result.map(toJson)
     taskReplies.map(json => Ok(json).withHeaders("Access-Control-Allow-Origin" -> "*"))
   }

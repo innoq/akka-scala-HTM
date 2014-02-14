@@ -1,6 +1,6 @@
 package service.org
 
-import akka.actor.{ Props, Actor }
+import akka.actor.{ ActorLogging, Props, Actor }
 import service.task.{ TaskView, FilteredTask }
 import service.org.OrgService.Protocol.{ OrgServiceUnreachable, FilteredTasks, FilterTasks }
 import play.api.libs.ws.{ Response, WS }
@@ -8,7 +8,7 @@ import play.api.libs.json._
 import akka.pattern.CircuitBreaker
 import akka.pattern.CircuitBreakerOpenException
 
-class OrgService extends Actor {
+class OrgService extends Actor with ActorLogging {
   import concurrent.duration._
   import context.dispatcher
   val breaker =
@@ -29,7 +29,7 @@ class OrgService extends Actor {
         implicit val success = new retry.Success[Response](_.status == 200)
         import retry.Defaults._
         retry.Directly(3) { () =>
-          WS.url("http://10.100.100.172:3001/org").put(buildRequest(userId, tasks))
+          WS.url("http://localhost:3000/org").put(buildRequest(userId, tasks))
         }
       }
       responseF map responseToFilteredTasks(userId) recover {
@@ -39,8 +39,9 @@ class OrgService extends Actor {
 
   private def responseToFilteredTasks(userId: String)(resp: Response): FilteredTasks = {
     import OrgService._
+    log.info(resp.body)
     val r = resp.json.as[OrgResponse](orgResponseReads)
-    FilteredTasks(userId, r.tasks)
+    FilteredTasks(userId.toInt, r.tasks)
   }
 
   private def buildRequest(userId: String, tasks: Vector[TaskView]): JsObject = {
@@ -73,7 +74,7 @@ object OrgService {
 
   object Protocol {
     case class FilterTasks(userId: String, tasks: Vector[TaskView])
-    case class FilteredTasks(userId: String, tasks: Vector[FilteredTask])
+    case class FilteredTasks(userId: Int, tasks: Vector[FilteredTask])
     case object OrgServiceUnreachable
   }
 }
