@@ -18,7 +18,7 @@ class OrgServiceSpec extends TestKit(ActorSystem("test-system")) with Specificat
     "return a filtered list of tasks" in {
       val orgService = system.actorOf(OrgService.props())
       val tasks = Vector(new TaskView(
-        new TaskModelImpl("1", role = Some("management")), Ready))
+        TaskModel("1", role = Some("management")), Ready))
       orgService ! FilterTasks("1", tasks)
       expectMsgPF(3000.millis) {
         case FilteredTasks(userId, Vector(FilteredTask("1", "in role"))) =>
