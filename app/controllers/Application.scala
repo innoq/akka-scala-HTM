@@ -2,23 +2,19 @@ package controllers
 
 import play.api._
 import play.api.mvc._
-import plugin.EventsourcedPlugin
 import play.api.libs.json.Json
+import controllers.web.DefaultController
 
-object Application extends Controller {
+object Application extends DefaultController {
 
   def index = Action { implicit request =>
     render {
-      case Accepts.Html() => html.withHeaders("Access-Control-Allow-Origin" -> "*")
-      case Accepts.Json() => json.withHeaders("Access-Control-Allow-Origin" -> "*")
+      case Accepts.Html() => html
+      case Accepts.Json() => json
     }
   }
 
   def html = {
-    val a = play.api.Play.current.plugin[EventsourcedPlugin] match {
-      case Some(plugin) => plugin.eventsourcedExtension
-      case None => throw new Exception("No eventsourced plugin registered")
-    }
     Ok(views.html.index())
   }
 

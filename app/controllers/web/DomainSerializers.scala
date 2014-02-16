@@ -22,8 +22,8 @@ trait DomainSerializers {
       case _ => false
     }.map { case (key, value: JsValue) => (key -> value.as[String]) }.toMap) and
       (__ \ "type").read[String] and
-      (__ \ "user_id").readNullable[Int].map(_.map(_.toString)) and
       (__ \ "role").readNullable[String] and
+      (__ \ "user_id").readNullable[Int].map(_.map(_.toString)) and
       (__ \ "delegated_user").readNullable[String])(CreateTask.apply _)
 
   case class TaskReply(id: String, output: TaskData, input: TaskData, state: String, `type`: String)

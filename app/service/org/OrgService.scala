@@ -22,8 +22,8 @@ class OrgService extends Actor with ActorLogging {
   }
 
   def receive = {
+    case FilterTasks(userId, tasks) if tasks.isEmpty => sender ! FilteredTasks(userId.toInt, Vector.empty)
     case FilterTasks(userId, tasks: Vector[TaskView]) =>
-      log.info("tasks: {}", tasks map (_.taskModel) mkString ("\n"))
       import context.dispatcher
       import akka.pattern.pipe
       val responseF = breaker withCircuitBreaker {
