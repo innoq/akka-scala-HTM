@@ -8,7 +8,7 @@ GET         /                     controllers.Application.index
 # Tasks resource
 POST        /tasks                controllers.Tasks.createTaskAction
 
-POST        /task/assignee        controllers.Tasks.claim
+POST        /task/:id/assignee    controllers.Tasks.claim(id)
 
 GET         /task/:id             controllers.Tasks.lookup(id)
 

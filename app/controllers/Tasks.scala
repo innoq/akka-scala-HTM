@@ -26,11 +26,10 @@ object Tasks extends DefaultController {
     result.map { task => Ok(taskToJson(task.taskModel)) }
   }
 
-  def claim = Action.async(parse.json) { request =>
-    Logger.info("claim" + request.body.toString())
-    Json.fromJson(request.body)(idAndUserReads).fold(err => {
-      Future.successful(BadRequest(""))
-    }, { case (id, user) => claimTask(id, user) })
+  def claim(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"claim task $taskId")
+    (request.body \ "user").asOpt[String]
+      .fold(Future.successful(BadRequest("missing user attribute")))(user => claimTask(taskId, user))
   }
 
   def claimTask(taskId: String, user: String) = {
