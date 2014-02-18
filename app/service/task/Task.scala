@@ -58,7 +58,7 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   }
 
   onTransition {
-    case e => log.debug("transition => $e")
+    case e => log.debug(s"transition => $e")
   }
 
   initialize()

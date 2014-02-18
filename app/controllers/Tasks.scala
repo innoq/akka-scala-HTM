@@ -22,9 +22,25 @@ object Tasks extends DefaultController {
 
   def createTask(task: CreateTask) = {
     Logger.info("new task " + task)
-    val manager = Akka.system.actorSelection(TaskManager.actorPath)
-    val result = ask(manager, task).mapTo[TaskInitialized]
-    result.map { task => Ok(task.toString()) }
+    val result = ask(taskManagerActor, task).mapTo[TaskInitialized]
+    result.map { task => Ok(taskToJson(task.taskModel)) }
+  }
+
+  def claim = Action.async(parse.json) { request =>
+    Logger.info("claim" + request.body.toString())
+    Json.fromJson(request.body)(idAndUserReads).fold(err => {
+      println(err)
+      Future.successful(BadRequest(""))
+    }, { case (id, user) => claimTask(id, user) })
+  }
+
+  def claimTask(taskId: String, user: String) = {
+    ask(taskManagerActor, TaskCommand(taskId, Claim(user)))
+      .map {
+        case TaskClaimed(model) => Ok(taskToJson(model))
+        case e: NoSuchTask => NotFound
+      }
+      .recover { case e: Exception => InternalServerError(e.getMessage) }
   }
 
   def list(userIdParam: String) = Action.async { request =>
@@ -36,7 +52,10 @@ object Tasks extends DefaultController {
   }
 
   def lookupTaskList(userId: Option[String]) = {
-    val manager = Akka.system.actorSelection(TaskListReadModelActor.actorPath)
-    ask(manager, GetTaskList(userId)).mapTo[Either[TaskListUnavailable.type, TaskList]]
+    ask(readModelActor, GetTaskList(userId)).mapTo[Either[TaskListUnavailable.type, TaskList]]
   }
+
+  def taskManagerActor = Akka.system.actorSelection(TaskManager.actorPath)
+
+  def readModelActor = Akka.system.actorSelection(TaskListReadModelActor.actorPath)
 }

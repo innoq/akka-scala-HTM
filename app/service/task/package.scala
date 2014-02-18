@@ -6,6 +6,7 @@ package object task {
   // commands
   sealed trait TaskManagerCommands
   case class CreateTask(input: TaskData, taskType: String, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None) extends TaskManagerCommands
+  case class TaskLookup(taskId: String)
   case class TaskCommand(taskId: String, command: Command) extends TaskManagerCommands
 
   // events

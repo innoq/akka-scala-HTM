@@ -19,8 +19,11 @@ class TaskManager extends Actor with ActorLogging {
     case TaskCommand(taskId, command) => {
       log.debug(s"forward command $command to task $taskId")
       tasks.get(taskId) match {
-        case None => this.sender ! NoSuchTask(taskId)
-        case Some(ref) => ref ! command
+        case None => {
+          log.info(s"task lookup ($taskId) failed")
+          this.sender ! NoSuchTask(taskId)
+        }
+        case Some(ref) => ref forward command
       }
     }
   }

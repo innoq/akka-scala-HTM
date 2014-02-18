@@ -14,6 +14,8 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import service.task.CreateTask
 
+object DomainSerializers extends DomainSerializers
+
 trait DomainSerializers {
 
   implicit val createTaskReads =
@@ -28,6 +30,33 @@ trait DomainSerializers {
 
   case class TaskReply(id: String, output: TaskData, input: TaskData, state: String, `type`: String)
 
+  implicit val taskWrites = Json.writes[TaskReply]
+
+  val idAndUserReads =
+    ((__ \ "id").read[String] and
+      (__ \ "user").read[String]) tupled
+
+  def taskToJson(t: TaskView): JsObject = {
+    val fields = Vector(
+      "id" -> Some(t.id),
+      "state" -> Some(t.taskState.toString.toLowerCase),
+      "role" -> t.role,
+      "user_id" -> t.userId,
+      "delegated_user" -> t.delegatedUser
+    ) collect { case (key, Some(value)) => key -> JsString(value) }
+    JsObject(fields)
+  }
+
+  def taskToJson(t: TaskModel): JsObject = {
+    val fields = Vector(
+      "id" -> Some(t.id),
+      "role" -> t.role,
+      "user_id" -> t.userId,
+      "delegated_user" -> t.delegatedUser
+    ) collect { case (key, Some(value)) => key -> JsString(value) }
+    JsObject(fields)
+  }
+
   def toJson(list: TaskList): JsValue = {
     val tasks = list.elems.map { task =>
       val taskState = task.taskState match {
@@ -38,7 +67,5 @@ trait DomainSerializers {
     }
     Json.toJson(Map("tasks" -> tasks))
   }
-
-  implicit val taskWrites = Json.writes[TaskReply]
 }
 

@@ -7,6 +7,7 @@ import play.api.libs.ws.{ Response, WS }
 import play.api.libs.json._
 import akka.pattern.CircuitBreaker
 import akka.pattern.CircuitBreakerOpenException
+import controllers.web.DomainSerializers
 
 class OrgService extends Actor with ActorLogging {
   import concurrent.duration._
@@ -48,19 +49,8 @@ class OrgService extends Actor with ActorLogging {
   private def buildRequest(userId: String, tasks: Vector[TaskView]): JsObject = {
     Json.obj(
       "user_id" -> userId.toInt,
-      "tasks" -> (tasks map taskToJson)
+      "tasks" -> (tasks map DomainSerializers.taskToJson)
     )
-  }
-
-  private def taskToJson(t: TaskView): JsObject = {
-    val fields = Vector(
-      "id" -> Some(t.id),
-      "state" -> Some(t.taskState.toString.toLowerCase),
-      "role" -> t.role,
-      "user_id" -> t.userId,
-      "delegated_user" -> t.delegatedUser
-    ) collect { case (key, Some(value)) => key -> JsString(value) }
-    JsObject(fields)
   }
 
 }
