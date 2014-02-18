@@ -2,12 +2,10 @@ package service.task
 
 import akka.actor.{ ActorRef, ActorLogging, Props, Actor }
 import akka.pattern._
-import scala.concurrent.duration._
-import service.task.Task.Protocol.{ TaskInitialized, TaskEvent }
+import service.task.Task.Protocol.TaskEvent
 import scala.concurrent.Future
 import service.task.TaskListReadModelActor.Protocol._
-import service.org.OrgService.Protocol.{ OrgServiceUnreachable, FilteredTasks, FilterTasks }
-import service.task.FilteredTask
+import service.org.OrgService.Protocol.OrgServiceUnreachable
 import service.org.OrgService.Protocol.FilteredTasks
 import service.task.TaskListReadModelActor.Protocol.TaskList
 import service.org.OrgService.Protocol.FilterTasks
@@ -15,8 +13,9 @@ import service.task.TaskListReadModelActor.Protocol.GetTaskList
 import service.task.Task.Protocol.TaskInitialized
 import scala.Some
 import service.task.TaskListReadModelActor.Protocol.GetTask
+import controllers.web.Defaults
 
-class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with ActorLogging {
+class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with Defaults with ActorLogging {
 
   implicit def dis = this.context.dispatcher
 
@@ -30,12 +29,12 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with ActorLo
     }
     case GetTaskList(userId) => {
       val taskViews = model.values.toVector
-      val filteredTaskViews = userId match {
-        case None => Future.successful(Right(TaskList(taskViews)))
+      val filteredTaskViews: Future[Msg] = userId match {
+        case None => Future.successful(TaskList(taskViews))
         case Some(userId) => {
-          ask(orgServer, FilterTasks(userId, taskViews))(2.seconds).map {
-            case FilteredTasks(_, tasks) => Right(TaskList(tasks.map { case FilteredTask(id, _) => model(id) }))
-            case OrgServiceUnreachable => Left(TaskListUnavailable)
+          ask(orgServer, FilterTasks(userId, taskViews)).map {
+            case FilteredTasks(_, tasks) => TaskList(tasks.map { case FilteredTask(id, _) => model(id) })
+            case OrgServiceUnreachable => TaskListUnavailable
           }
         }
       }
@@ -57,10 +56,11 @@ object TaskListReadModelActor {
   def props(orgServer: ActorRef) = Props(classOf[TaskListReadModelActor], orgServer)
 
   object Protocol {
-    case class GetTaskList(userId: Option[String])
-    case class GetTask(taskId: String)
-    case class TaskList(elems: Seq[TaskView])
-    case class NotFound(taskId: String)
-    case object TaskListUnavailable
+    sealed trait Msg
+    case class GetTaskList(userId: Option[String]) extends Msg
+    case class GetTask(taskId: String) extends Msg
+    case class TaskList(elems: Seq[TaskView]) extends Msg
+    case class NotFound(taskId: String) extends Msg
+    case object TaskListUnavailable extends Msg
   }
 }

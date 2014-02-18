@@ -43,22 +43,23 @@ object Tasks extends DefaultController {
   }
 
   def lookup(taskId: String) = Action.async { request =>
-    ask(readModelActor, GetTask(taskId)).map {
+    ask(readModelActor, GetTask(taskId)) map {
       case TaskList(tasks) if !tasks.isEmpty => Ok(taskToJson(tasks.head))
       case e: NotFound => NotFound
+      case e => InternalServerError(e.toString)
     }
   }
 
-  def list(userIdParam: String) = Action.async { request =>
-    val userId = if (userIdParam == "-1") None else Some(userIdParam)
+  def list(userId: Option[String]) = Action.async { request =>
     lookupTaskList(userId) map {
-      case Right(taskList) => Ok(toJson(taskList))
-      case Left(TaskListUnavailable) => ServiceUnavailable("task list is not available; try again later")
+      case tasks: TaskList => Ok(toJson(tasks))
+      case TaskListUnavailable => ServiceUnavailable("task list is not available; try again later")
+      case e => InternalServerError(e.toString)
     }
   }
 
   def lookupTaskList(userId: Option[String]) = {
-    ask(readModelActor, GetTaskList(userId)).mapTo[Either[TaskListUnavailable.type, TaskList]]
+    ask(readModelActor, GetTaskList(userId))
   }
 
   def taskManagerActor = Akka.system.actorSelection(TaskManager.actorPath)
