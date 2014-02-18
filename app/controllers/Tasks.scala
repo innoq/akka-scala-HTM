@@ -42,6 +42,13 @@ object Tasks extends DefaultController {
       .recover { case e: Exception => InternalServerError(e.getMessage) }
   }
 
+  def lookup(taskId: String) = Action.async { request =>
+    ask(readModelActor, GetTask(taskId)).map {
+      case TaskList(tasks) if !tasks.isEmpty => Ok(taskToJson(tasks.head))
+      case e: NotFound => NotFound
+    }
+  }
+
   def list(userIdParam: String) = Action.async { request =>
     val userId = if (userIdParam == "-1") None else Some(userIdParam)
     lookupTaskList(userId) map {

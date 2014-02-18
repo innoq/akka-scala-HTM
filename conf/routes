@@ -3,14 +3,16 @@
 # ~~~~
 
 # Home page
-GET         /                    controllers.Application.index
+GET         /                     controllers.Application.index
 
 # Tasks resource
-POST        /tasks               controllers.Tasks.createTaskAction
+POST        /tasks                controllers.Tasks.createTaskAction
 
-POST        /task/assignee       controllers.Tasks.claim
+POST        /task/assignee        controllers.Tasks.claim
 
-GET         /tasks               controllers.Tasks.list(user_id ?= "-1")
+GET         /task/:id             controllers.Tasks.lookup(id)
+
+GET         /tasks                controllers.Tasks.list(user_id ?= "-1")
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file        controllers.Assets.at(path="/public", file)
+GET         /assets/*file         controllers.Assets.at(path="/public", file)
