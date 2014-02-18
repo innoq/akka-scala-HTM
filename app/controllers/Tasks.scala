@@ -29,7 +29,6 @@ object Tasks extends DefaultController {
   def claim = Action.async(parse.json) { request =>
     Logger.info("claim" + request.body.toString())
     Json.fromJson(request.body)(idAndUserReads).fold(err => {
-      println(err)
       Future.successful(BadRequest(""))
     }, { case (id, user) => claimTask(id, user) })
   }
