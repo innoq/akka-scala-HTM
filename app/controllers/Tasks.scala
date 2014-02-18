@@ -29,20 +29,17 @@ object Tasks extends DefaultController {
   def claim(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"claim task $taskId")
     (request.body \ "user").asOpt[String]
-      .fold(Future.successful(BadRequest("missing user attribute")))(user => claimTask(taskId, user))
-  }
-
-  def claimTask(taskId: String, user: String) = {
-    ask(taskManagerActor, TaskCommand(taskId, Claim(user))).map {
-      case TaskClaimed(model) => Ok(taskToJson(model))
-      case e: NoSuchTask => NotFound
-    }.recover { case e: Exception => InternalServerError(e.getMessage) }
+      .fold(Future.successful(BadRequest("missing user attribute")))(user => stateChange(taskId, Claim(user)))
   }
 
   def start(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"start working on task $taskId")
-    ask(taskManagerActor, TaskCommand(taskId, Start)).map {
-      case TaskStarted(model) => Ok(taskToJson(model))
+    stateChange(taskId, Start)
+  }
+
+  def stateChange(taskId: String, msg: Command) = {
+    ask(taskManagerActor, TaskCommand(taskId, msg)).map {
+      case e: TaskEvent => Ok(taskToJson(e.taskModel))
       case e: NoSuchTask => NotFound
     }.recover { case e: Exception => InternalServerError(e.getMessage) }
   }
