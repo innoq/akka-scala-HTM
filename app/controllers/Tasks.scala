@@ -33,12 +33,18 @@ object Tasks extends DefaultController {
   }
 
   def claimTask(taskId: String, user: String) = {
-    ask(taskManagerActor, TaskCommand(taskId, Claim(user)))
-      .map {
-        case TaskClaimed(model) => Ok(taskToJson(model))
-        case e: NoSuchTask => NotFound
-      }
-      .recover { case e: Exception => InternalServerError(e.getMessage) }
+    ask(taskManagerActor, TaskCommand(taskId, Claim(user))).map {
+      case TaskClaimed(model) => Ok(taskToJson(model))
+      case e: NoSuchTask => NotFound
+    }.recover { case e: Exception => InternalServerError(e.getMessage) }
+  }
+
+  def start(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"start working on task $taskId")
+    ask(taskManagerActor, TaskCommand(taskId, Start)).map {
+      case TaskStarted(model) => Ok(taskToJson(model))
+      case e: NoSuchTask => NotFound
+    }.recover { case e: Exception => InternalServerError(e.getMessage) }
   }
 
   def lookup(taskId: String) = Action.async { request =>
