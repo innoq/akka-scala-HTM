@@ -32,10 +32,6 @@ trait DomainSerializers {
 
   implicit val taskWrites = Json.writes[TaskReply]
 
-  val idAndUserReads =
-    ((__ \ "id").read[String] and
-      (__ \ "user").read[String]) tupled
-
   def taskToJson(t: TaskView): JsObject = {
     val fields = Vector(
       "id" -> Some(t.id),
