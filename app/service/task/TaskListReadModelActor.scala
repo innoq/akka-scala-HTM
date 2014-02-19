@@ -24,8 +24,8 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with Default
   var model = Map.empty[String, TaskView]
 
   def receive = {
-    case TaskInitialized(taskModel) => {
-      model = model + (taskModel.id -> new TaskView(taskModel, Ready))
+    case s: TaskEvent => {
+      model = model + (s.taskModel.id -> new TaskView(s.taskModel, s.state))
     }
     case GetTaskList(userId) => {
       val taskViews = model.values.toVector

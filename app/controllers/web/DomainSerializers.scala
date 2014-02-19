@@ -13,6 +13,7 @@ import service.task.TaskListReadModelActor.Protocol.TaskList
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import service.task.CreateTask
+import play.api.Logger
 
 object DomainSerializers extends DomainSerializers
 
@@ -35,7 +36,7 @@ trait DomainSerializers {
   def taskToJson(t: TaskView): JsObject = {
     val fields = Vector(
       "id" -> Some(t.id),
-      "state" -> Some(t.taskState.toString.toLowerCase),
+      "state" -> Some(t.taskState.name),
       "role" -> t.role,
       "user_id" -> t.userId,
       "delegated_user" -> t.delegatedUser
@@ -55,13 +56,11 @@ trait DomainSerializers {
 
   def toJson(list: TaskList): JsValue = {
     val tasks = list.elems.map { task =>
-      val taskState = task.taskState match {
-        case Ready => "ready"
-        case _ => "other"
-      }
+      val taskState = task.taskState.name
       TaskReply(task.id, task.taskData, task.taskData, taskState, task.taskType)
     }
-    Json.toJson(Map("tasks" -> tasks))
+    val json = Json.toJson(Map("tasks" -> tasks))
+    json
   }
 }
 

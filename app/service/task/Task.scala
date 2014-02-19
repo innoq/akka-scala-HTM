@@ -17,29 +17,29 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   when(Created) {
     case Event(Init(taskId, taskType, input, role, userId, delegate), data) => {
       val taskModel = TaskModelImpl(taskId, taskType, role, userId, delegate, input)
-      goto(Ready) using InitialData(taskModel) replying publishing(TaskInitialized(taskModel))
+      goto(Ready) using InitialData(taskModel) replying publishing(TaskInitialized(Ready, taskModel))
     }
   }
 
   when(Ready) {
     case Event(Claim(userId), InitialData(taskModel)) => {
       val model = taskModel.copy(userId = Some(userId))
-      goto(Reserved) using ClaimedData(model) replying publishing(TaskClaimed(model))
+      goto(Reserved) using ClaimedData(model) replying publishing(TaskClaimed(Reserved, model))
     }
   }
 
   when(Reserved) {
     case Event(Start, data: ClaimedData) =>
-      goto(InProgress) replying publishing(TaskStarted(data.taskData))
+      goto(InProgress) replying publishing(TaskStarted(InProgress, data.taskData))
     case Event(Release, ClaimedData(model)) =>
-      goto(Ready) using InitialData(model) replying publishing(TaskReleased(model))
+      goto(Ready) using InitialData(model) replying publishing(TaskReleased(Ready, model))
   }
 
   when(InProgress) {
     case Event(Complete(result), ClaimedData(taskData)) =>
-      goto(Completed) using CompletedData(taskData) replying publishing(TaskCompleted(taskData))
+      goto(Completed) using CompletedData(taskData) replying publishing(TaskCompleted(Completed, taskData))
     case Event(Stop, ClaimedData(taskData)) =>
-      goto(Reserved) replying publishing(TaskStopped(taskData))
+      goto(Reserved) replying publishing(TaskStopped(Reserved, taskData))
   }
 
   when(Obsolete) {
@@ -52,7 +52,7 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
 
   whenUnhandled {
     case Event(Skip, d) =>
-      goto(Obsolete) using EmptyData(d.taskId) replying TaskSkipped(d.taskId)
+      goto(Obsolete) using EmptyData(d.taskId) replying TaskSkipped(Obsolete, d.taskId)
     case Event(cmd: Command, data) =>
       stay replying publishing(InvalidCommandRejected(cmd, stateName, data.taskId))
   }
@@ -71,17 +71,18 @@ object Task {
   object Protocol {
     sealed abstract class TaskEvent {
       def taskModel: TaskModel
+      def state: TaskState
     }
-    case class TaskInitialized(taskModel: TaskModel) extends TaskEvent
-    case class TaskClaimed(taskModel: TaskModel) extends TaskEvent
-    case class TaskStarted(taskModel: TaskModel) extends TaskEvent
-    case class TaskReleased(taskModel: TaskModel) extends TaskEvent
-    case class TaskCompleted(taskModel: TaskModel) extends TaskEvent
-    case class TaskStopped(taskModel: TaskModel) extends TaskEvent
-    case class TaskSkipped(taskId: String) extends TaskEvent {
+    case class TaskInitialized(state: TaskState, taskModel: TaskModel) extends TaskEvent
+    case class TaskClaimed(state: TaskState, taskModel: TaskModel) extends TaskEvent
+    case class TaskStarted(state: TaskState, taskModel: TaskModel) extends TaskEvent
+    case class TaskReleased(state: TaskState, taskModel: TaskModel) extends TaskEvent
+    case class TaskCompleted(state: TaskState, taskModel: TaskModel) extends TaskEvent
+    case class TaskStopped(state: TaskState, taskModel: TaskModel) extends TaskEvent
+    case class TaskSkipped(state: TaskState, taskId: String) extends TaskEvent {
       def taskModel = TaskModel.default(taskId, Map.empty)
     }
-    case class InvalidCommandRejected(cmd: Command, stateName: TaskState, taskId: String) extends TaskEvent {
+    case class InvalidCommandRejected(cmd: Command, state: TaskState, taskId: String) extends TaskEvent {
       def taskModel = TaskModel.default(taskId, Map.empty)
     }
   }
