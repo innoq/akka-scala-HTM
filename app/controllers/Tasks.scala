@@ -12,6 +12,8 @@ import service.task.TaskListReadModelActor.Protocol._
 import play.api.libs.json._
 import scala.concurrent.Future
 import controllers.web.DefaultController
+import akka.actor.{ActorSelection, ActorRef}
+import scala.util.control.NonFatal
 
 object Tasks extends DefaultController {
 
@@ -59,30 +61,29 @@ object Tasks extends DefaultController {
   }
 
   def stateChange(taskId: String, msg: Command) = {
-    ask(taskManagerActor, TaskCommand(taskId, msg)).map {
-      case e: InvalidCommandRejected => BadRequest("invalid state change rejected")
+    askDefault(taskManagerActor, TaskCommand(taskId, msg)) {
+      case e: InvalidCommandRejected => BadRequest(error("invalid state change rejected"))
       case e: TaskEvent => Ok(taskToJson(e.taskModel))
       case e: NoSuchTask => NotFound
-    }.recover { case e: Exception => InternalServerError(e.getMessage) }
-  }
-
-  def lookup(taskId: String) = Action.async { request =>
-    ask(readModelActor, GetTask(taskId)).map {
-      case TaskList(tasks) if !tasks.isEmpty => Ok(taskToJson(tasks.head))
-      case e: NotFound => NotFound
-    }.recover { case e: Exception => InternalServerError(e.getMessage) }
-  }
-
-  def list(userId: Option[String]) = Action.async { request =>
-    lookupTaskList(userId) map {
-      case tasks: TaskList => Ok(toJson(tasks))
-      case TaskListUnavailable => ServiceUnavailable("task list is not available; try again later")
-      case e => InternalServerError(e.toString)
     }
   }
 
-  def lookupTaskList(userId: Option[String]) = {
-    ask(readModelActor, GetTaskList(userId))
+  def lookup(taskId: String) = Action.async { request =>
+    askDefault(readModelActor, GetTask(taskId)) {
+      case TaskList(tasks) if !tasks.isEmpty => Ok(taskToJson(tasks.head))
+      case e: NotFound => NotFound
+    }
+  }
+
+  def list(userId: Option[String]) = Action.async { request =>
+    askDefault(readModelActor, GetTaskList(userId)){
+      case tasks: TaskList => Ok(toJson(tasks))
+      case TaskListUnavailable => ServiceUnavailable(error("task list is not available; try again later"))
+    }
+  }
+
+  def askDefault(ref: ActorSelection, msg: AnyRef)(handle: Any => SimpleResult) = {
+    ask(ref, msg).map(handle).recover { case e:Exception => InternalServerError(failure(e)) }
   }
 
   def taskManagerActor = Akka.system.actorSelection(TaskManager.actorPath)
