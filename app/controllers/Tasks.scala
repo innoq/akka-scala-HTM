@@ -67,11 +67,10 @@ object Tasks extends DefaultController {
   }
 
   def lookup(taskId: String) = Action.async { request =>
-    ask(readModelActor, GetTask(taskId)) map {
+    ask(readModelActor, GetTask(taskId)).map {
       case TaskList(tasks) if !tasks.isEmpty => Ok(taskToJson(tasks.head))
       case e: NotFound => NotFound
-      case e => InternalServerError(e.toString)
-    }
+    }.recover { case e: Exception => InternalServerError(e.getMessage) }
   }
 
   def list(userId: Option[String]) = Action.async { request =>
