@@ -43,6 +43,21 @@ object Tasks extends DefaultController {
       .fold(stateChange(taskId, Complete(EmptyTaskData)))(output => stateChange(taskId, Complete(output)))
   }
 
+  def release(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"release task $taskId")
+    stateChange(taskId, Release)
+  }
+
+  def stop(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"stop work on task $taskId")
+    stateChange(taskId, Stop)
+  }
+
+  def skip(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"skip task $taskId")
+    stateChange(taskId, Skip)
+  }
+
   def stateChange(taskId: String, msg: Command) = {
     ask(taskManagerActor, TaskCommand(taskId, msg)).map {
       case e: TaskEvent => Ok(taskToJson(e.taskModel))
