@@ -12,14 +12,14 @@ import service.task.TaskListReadModelActor.Protocol._
 import play.api.libs.json._
 import scala.concurrent.Future
 import controllers.web.DefaultController
-import akka.actor.{ActorSelection, ActorRef}
+import akka.actor.{ ActorSelection, ActorRef }
 import scala.util.control.NonFatal
 
 object Tasks extends DefaultController {
 
   def createTaskAction = Action.async(parse.json) { request =>
     val task = (request.body \ "task").validate[JsObject].flatMap(task => Json.fromJson[CreateTask](task))
-    task.fold(error => Future.successful(BadRequest("")), createTask)
+    task.fold(error => Future.successful(BadRequest), createTask)
   }
 
   def createTask(task: CreateTask) = {
@@ -31,7 +31,7 @@ object Tasks extends DefaultController {
   def claim(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"claim task $taskId")
     (request.body \ "user").asOpt[String]
-      .fold(Future.successful(BadRequest("missing user attribute")))(user => stateChange(taskId, Claim(user)))
+      .fold(Future.successful(BadRequest(error("missing user attribute"))))(user => stateChange(taskId, Claim(user)))
   }
 
   def start(taskId: String) = Action.async(parse.json) { request =>
@@ -63,7 +63,7 @@ object Tasks extends DefaultController {
   def stateChange(taskId: String, msg: Command) = {
     askDefault(taskManagerActor, TaskCommand(taskId, msg)) {
       case e: InvalidCommandRejected => BadRequest(error("invalid state change rejected"))
-      case e: TaskEvent => Ok(taskToJson(e.taskModel))
+      case e: TaskEvent => Ok(taskToJson(new TaskView(e.taskModel, e.state)))
       case e: NoSuchTask => NotFound
     }
   }
@@ -76,14 +76,14 @@ object Tasks extends DefaultController {
   }
 
   def list(userId: Option[String]) = Action.async { request =>
-    askDefault(readModelActor, GetTaskList(userId)){
+    askDefault(readModelActor, GetTaskList(userId)) {
       case tasks: TaskList => Ok(toJson(tasks))
       case TaskListUnavailable => ServiceUnavailable(error("task list is not available; try again later"))
     }
   }
 
   def askDefault(ref: ActorSelection, msg: AnyRef)(handle: Any => SimpleResult) = {
-    ask(ref, msg).map(handle).recover { case e:Exception => InternalServerError(failure(e)) }
+    ask(ref, msg).map(handle).recover { case e: Exception => InternalServerError(failure(e)) }
   }
 
   def taskManagerActor = Akka.system.actorSelection(TaskManager.actorPath)
