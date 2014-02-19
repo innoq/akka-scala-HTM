@@ -54,7 +54,7 @@ trait DomainSerializers {
   def toJson(list: TaskList): JsValue = {
     val tasks = list.elems.map { task =>
       val taskState = task.taskState.name
-      TaskReply(task.id, task.taskData, task.taskData, taskState, task.taskType)
+      TaskReply(task.id, task.result, task.taskData, taskState, task.taskType)
     }
     val json = Json.toJson(Map("tasks" -> tasks))
     json

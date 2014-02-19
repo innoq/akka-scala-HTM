@@ -37,6 +37,12 @@ object Tasks extends DefaultController {
     stateChange(taskId, Start)
   }
 
+  def complete(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"complete task $taskId")
+    (request.body \ "output").asOpt[JsObject]
+      .fold(stateChange(taskId, Complete(EmptyTaskData)))(output => stateChange(taskId, Complete(output)))
+  }
+
   def stateChange(taskId: String, msg: Command) = {
     ask(taskManagerActor, TaskCommand(taskId, msg)).map {
       case e: TaskEvent => Ok(taskToJson(e.taskModel))

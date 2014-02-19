@@ -16,7 +16,7 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
 
   when(Created) {
     case Event(Init(taskId, taskType, input, role, userId, delegate), data) => {
-      val taskModel = TaskModelImpl(taskId, taskType, role, userId, delegate, input)
+      val taskModel = TaskModel(taskId, taskType, role, userId, delegate, input)
       goto(Ready) using InitialData(taskModel) replying publishing(TaskInitialized(Ready, taskModel))
     }
   }
@@ -36,8 +36,10 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   }
 
   when(InProgress) {
-    case Event(Complete(result), ClaimedData(taskData)) =>
-      goto(Completed) using CompletedData(taskData) replying publishing(TaskCompleted(Completed, taskData))
+    case Event(Complete(result), ClaimedData(taskData)) => {
+      val newTaskData = taskData.copy(result = result)
+      goto(Completed) using CompletedData(newTaskData) replying publishing(TaskCompleted(Completed, newTaskData))
+    }
     case Event(Stop, ClaimedData(taskData)) =>
       goto(Reserved) replying publishing(TaskStopped(Reserved, taskData))
   }

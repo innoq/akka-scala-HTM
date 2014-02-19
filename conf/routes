@@ -12,6 +12,8 @@ POST        /task/:id/assignee        controllers.Tasks.claim(id)
 
 POST        /task/:id/process         controllers.Tasks.start(id)
 
+POST        /task/:id/done            controllers.Tasks.complete(id)
+
 GET         /task/:id                 controllers.Tasks.lookup(id)
 
 GET         /tasks                    controllers.Tasks.list(user_id : Option[String])
