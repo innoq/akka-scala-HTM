@@ -2,7 +2,7 @@ package service.task
 
 import akka.actor.{ ActorRef, ActorLogging, Props, Actor }
 import akka.pattern._
-import service.task.Task.Protocol.TaskEvent
+import service.task.Task.Protocol.{ InvalidCommandRejected, TaskEvent, TaskInitialized }
 import scala.concurrent.Future
 import service.task.TaskListReadModelActor.Protocol._
 import service.org.OrgService.Protocol.OrgServiceUnreachable
@@ -10,7 +10,6 @@ import service.org.OrgService.Protocol.FilteredTasks
 import service.task.TaskListReadModelActor.Protocol.TaskList
 import service.org.OrgService.Protocol.FilterTasks
 import service.task.TaskListReadModelActor.Protocol.GetTaskList
-import service.task.Task.Protocol.TaskInitialized
 import scala.Some
 import service.task.TaskListReadModelActor.Protocol.GetTask
 import controllers.web.Defaults
@@ -24,6 +23,9 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with Default
   var model = Map.empty[String, TaskView]
 
   def receive = {
+    case i: InvalidCommandRejected => {
+      //don't update task model, continue
+    }
     case s: TaskEvent => {
       model = model + (s.taskModel.id -> new TaskView(s.taskModel, s.state))
     }

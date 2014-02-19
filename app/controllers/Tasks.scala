@@ -60,6 +60,7 @@ object Tasks extends DefaultController {
 
   def stateChange(taskId: String, msg: Command) = {
     ask(taskManagerActor, TaskCommand(taskId, msg)).map {
+      case e: InvalidCommandRejected => BadRequest("invalid state change rejected")
       case e: TaskEvent => Ok(taskToJson(e.taskModel))
       case e: NoSuchTask => NotFound
     }.recover { case e: Exception => InternalServerError(e.getMessage) }

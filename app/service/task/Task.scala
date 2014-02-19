@@ -56,7 +56,7 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
     case Event(Skip, d) =>
       goto(Obsolete) using EmptyData(d.taskId) replying TaskSkipped(Obsolete, d.taskId)
     case Event(cmd: Command, data) =>
-      stay replying publishing(InvalidCommandRejected(cmd, stateName, data.taskId))
+      stay using data replying publishing(InvalidCommandRejected(cmd, stateName, data.taskId))
   }
 
   onTransition {
