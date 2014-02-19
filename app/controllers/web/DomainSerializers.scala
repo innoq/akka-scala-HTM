@@ -20,10 +20,7 @@ object DomainSerializers extends DomainSerializers
 trait DomainSerializers {
 
   implicit val createTaskReads =
-    ((__ \ "input").read[JsObject].map(_.fields.filter {
-      case (_, e: JsString) => true
-      case _ => false
-    }.map { case (key, value: JsValue) => (key -> value.as[String]) }.toMap) and
+    ((__ \ "input").read[JsObject] and
       (__ \ "type").read[String] and
       (__ \ "role").readNullable[String] and
       (__ \ "user_id").readNullable[Int].map(_.map(_.toString)) and

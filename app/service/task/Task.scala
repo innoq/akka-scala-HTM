@@ -80,10 +80,10 @@ object Task {
     case class TaskCompleted(state: TaskState, taskModel: TaskModel) extends TaskEvent
     case class TaskStopped(state: TaskState, taskModel: TaskModel) extends TaskEvent
     case class TaskSkipped(state: TaskState, taskId: String) extends TaskEvent {
-      def taskModel = TaskModel.default(taskId, Map.empty)
+      def taskModel = TaskModel.default(taskId)
     }
     case class InvalidCommandRejected(cmd: Command, state: TaskState, taskId: String) extends TaskEvent {
-      def taskModel = TaskModel.default(taskId, Map.empty)
+      def taskModel = TaskModel.default(taskId)
     }
   }
 }

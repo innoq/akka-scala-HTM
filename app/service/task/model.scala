@@ -15,9 +15,10 @@ object TaskModel {
     role: Option[String] = None,
     userId: Option[String] = None,
     delegatedUser: Option[String] = None,
-    taskData: TaskData = Map.empty) = TaskModelImpl(id, taskType, role, userId, delegatedUser, taskData)
+    taskData: TaskData = EmptyTaskData) = TaskModelImpl(id, taskType, role, userId, delegatedUser, taskData)
   def withUser(id: String, user: String, taskData: TaskData) = apply(id, "generic", None, Some(user), None, taskData)
-  def default(id: String, taskData: TaskData) = TaskModelImpl(id, "generic", None, None, None, taskData)
+  def default(id: String) = withData(id, EmptyTaskData)
+  def withData(id: String, taskData: TaskData) = TaskModelImpl(id, "generic", None, None, None, taskData)
 }
 
 case class TaskModelImpl(

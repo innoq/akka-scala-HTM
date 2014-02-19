@@ -1,5 +1,7 @@
 package service
 
+import play.api.libs.json.{ Json, JsObject }
+
 package object task {
 
   // TaskManager
@@ -35,16 +37,18 @@ package object task {
   case class CompletedData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
   case class EmptyData(taskId: String) extends Data
 
-  type TaskData = Map[String, String]
+  type TaskData = JsObject
+
+  lazy val EmptyTaskData = Json.parse("{ }").as[JsObject]
 
   // commands:
   sealed trait Command
-  case class Init(taskId: String, taskType: String, input: TaskData = Map.empty, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None)
+  case class Init(taskId: String, taskType: String, input: TaskData = EmptyTaskData, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None)
   case class Claim(userId: String) extends Command
   case object Release extends Command
   case object Start extends Command
   case object Stop extends Command
-  case class Complete(result: TaskData = Map.empty) extends Command
+  case class Complete(result: TaskData = EmptyTaskData) extends Command
   case object Skip extends Command
 
 }
