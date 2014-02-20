@@ -38,6 +38,9 @@ trait DomainSerializers {
       (__ \ "user_id").readNullable[Int].map(_.map(_.toString)) and
       (__ \ "delegated_user").readNullable[String])(CreateTask.apply _)
 
+  val taskReads =
+    ((__ \ "task")).read[JsObject]
+
   case class TaskReply(id: String, output: TaskData, input: TaskData, state: String, `type`: String)
 
   implicit val taskWrites = Json.writes[TaskReply]

@@ -18,10 +18,10 @@ import scala.util.control.NonFatal
 object Tasks extends DefaultController {
 
   def createTaskAction = Action.async(parse.json) { request =>
-    val task = (request.body \ "task").validate[JsObject].flatMap(task => Json.fromJson[CreateTask](task))
-    task.fold(error => {
-      Logger.warn("task creation failed" + error.toString())
-      Future.successful(BadRequest)
+    val task = Json.fromJson(request.body)(taskReads).flatMap(task => Json.fromJson[CreateTask](task))
+    task.fold(errorMsg => {
+      Logger.warn("task creation failed" + errorMsg.toString())
+      Future.successful(BadRequest(error(errorMsg)))
     }, createTask)
   }
 
