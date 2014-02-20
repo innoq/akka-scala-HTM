@@ -47,12 +47,12 @@ class OrgService extends Actor with ActorLogging {
   }
 
   private def buildRequest(userId: String, tasks: Vector[TaskView]): JsObject = {
+    implicit val write = DomainSerializers.taskViewWrites
     Json.obj(
       "user_id" -> userId.toInt,
-      "tasks" -> (tasks map DomainSerializers.taskToJson)
+      "tasks" -> Json.toJson(tasks)
     )
   }
-
 }
 
 object OrgService {

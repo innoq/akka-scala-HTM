@@ -18,7 +18,7 @@ import scala.util.control.NonFatal
 object Tasks extends DefaultController {
 
   def createTaskAction = Action.async(parse.json) { request =>
-    val task = Json.fromJson(request.body)(taskReads).flatMap(task => Json.fromJson[CreateTask](task))
+    val task = Json.fromJson(request.body)(taskAttributeReads).flatMap(task => Json.fromJson[CreateTask](task))
     task.fold(errorMsg => {
       Logger.warn("task creation failed" + errorMsg.toString())
       Future.successful(BadRequest(error(errorMsg)))
@@ -28,7 +28,7 @@ object Tasks extends DefaultController {
   def createTask(task: CreateTask) = {
     Logger.info("new task " + task)
     val result = ask(taskManagerActor, task).mapTo[TaskInitialized]
-    result.map { task => Ok(taskToJson(task.taskModel)) }.recover { case e: Exception => InternalServerError(failure(e)) }
+    result.map { task => Ok(Json.toJson(task.taskModel)) }.recover { case e: Exception => InternalServerError(failure(e)) }
   }
 
   def claim(taskId: String) = Action.async(parse.json) { request =>
@@ -66,14 +66,14 @@ object Tasks extends DefaultController {
   def stateChange(taskId: String, msg: Command) = {
     askDefault(taskManagerActor, TaskCommand(taskId, msg)) {
       case e: InvalidCommandRejected => BadRequest(error("invalid state change rejected"))
-      case e: TaskEvent => Ok(taskToJson(new TaskView(e.taskModel, e.state)))
+      case e: TaskEvent => Ok(Json.toJson(new TaskView(e.taskModel, e.state)))
       case e: NoSuchTask => NotFound
     }
   }
 
   def lookup(taskId: String) = Action.async { request =>
     askDefault(readModelActor, GetTask(taskId)) {
-      case TaskList(tasks) if !tasks.isEmpty => Ok(taskToJson(tasks.head))
+      case TaskList(tasks) if !tasks.isEmpty => Ok(Json.toJson(tasks.head))
       case e: NotFound => NotFound
     }
   }

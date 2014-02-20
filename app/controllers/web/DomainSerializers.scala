@@ -38,33 +38,33 @@ trait DomainSerializers {
       (__ \ "user_id").readNullable[Int].map(_.map(_.toString)) and
       (__ \ "delegated_user").readNullable[String])(CreateTask.apply _)
 
-  val taskReads =
+  val taskAttributeReads =
     ((__ \ "task")).read[JsObject]
 
   case class TaskReply(id: String, output: TaskData, input: TaskData, state: String, `type`: String)
 
   implicit val taskWrites = Json.writes[TaskReply]
 
-  def taskToJson(t: TaskView): JsObject = {
-    val fields = Vector(
-      "id" -> Some(t.id),
-      "state" -> Some(t.taskState.name),
-      "role" -> t.role,
-      "user_id" -> t.userId,
-      "delegated_user" -> t.delegatedUser
-    ) collect { case (key, Some(value)) => key -> JsString(value) }
-    JsObject(fields)
+  implicit val taskStateWrites = new Writes[TaskState] {
+    def writes(o: TaskState): JsValue = JsString(o.name)
   }
 
-  def taskToJson(t: TaskModel): JsObject = {
-    val fields = Vector(
-      "id" -> Some(t.id),
-      "role" -> t.role,
-      "user_id" -> t.userId,
-      "delegated_user" -> t.delegatedUser
-    ) collect { case (key, Some(value)) => key -> JsString(value) }
-    JsObject(fields)
+  implicit val taskViewWrites = new Writes[TaskView] {
+    def writes(o: TaskView): JsValue = {
+      val taskModel = Json.toJson(o.taskModel).as[JsObject]
+      taskModel + ("state" -> Json.toJson(o.taskState))
+    }
   }
+
+  implicit val taskModelWrites: Writes[TaskModel] =
+    ((__ \ "id").write[String] and
+      (__ \ "taskType").write[String] and
+      (__ \ "role").writeNullable[String] and
+      (__ \ "user_id").writeNullable[String] and
+      (__ \ "delegated_user").writeNullable[String] and
+      (__ \ "input").write[TaskData] and
+      (__ \ "output").write[TaskData]
+    )(unlift(TaskModel.unapply))
 
   def toJson(list: TaskList): JsValue = {
     val tasks = list.elems.map { task =>

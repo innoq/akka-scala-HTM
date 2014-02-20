@@ -18,6 +18,8 @@ object TaskModel {
     delegatedUser: Option[String] = None,
     taskData: TaskData = EmptyTaskData,
     result: TaskData = EmptyTaskData) = TaskModelImpl(id, taskType, role, userId, delegatedUser, taskData, result)
+  def unapply(taskModel: TaskModel) = Some((taskModel.id, taskModel.taskType, taskModel.role, taskModel.userId,
+    taskModel.delegatedUser, taskModel.taskData, taskModel.result))
   def withUser(id: String, user: String, taskData: TaskData) = apply(id, "generic", None, Some(user), None, taskData)
   def default(id: String) = withData(id, EmptyTaskData)
   def withData(id: String, taskData: TaskData) = apply(id, "generic", None, None, None, taskData)
