@@ -11,7 +11,7 @@ import service.task.Task.Protocol._
 import service.task.TaskListReadModelActor.Protocol._
 import play.api.libs.json._
 import scala.concurrent.Future
-import controllers.web.DefaultController
+import controllers.web.{ HalDocument, HalLinks, HalLink, DefaultController }
 import akka.actor.{ ActorSelection, ActorRef }
 import scala.util.control.NonFatal
 
@@ -28,7 +28,16 @@ object Tasks extends DefaultController {
   def createTask(task: CreateTask) = {
     Logger.info("new task " + task)
     val result = ask(taskManagerActor, task).mapTo[TaskInitialized]
-    result.map { task => Ok(Json.toJson(task.taskModel)) }.recover { case e: Exception => InternalServerError(failure(e)) }
+    result.map { task => Created(Json.toJson(halDocument(task.taskModel))) }
+      .recover { case e: Exception => InternalServerError(failure(e)) }
+  }
+
+  def halDocument(taskModel: TaskModel) = {
+    HalDocument(HalLinks.links(
+      HalLink("claim", routes.Tasks.claim(taskModel.id)),
+      HalLink("skip", routes.Tasks.skip(taskModel.id)),
+      HalLink("self", routes.Tasks.lookup(taskModel.id))),
+      Json.toJson(taskModel).as[JsObject])
   }
 
   def claim(taskId: String) = Action.async(parse.json) { request =>
