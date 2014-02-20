@@ -14,14 +14,26 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import service.task.CreateTask
 import play.api.Logger
+import org.joda.time.DateTime
+import scala.util.Try
 
 object DomainSerializers extends DomainSerializers
 
 trait DomainSerializers {
 
+  implicit val dtReads = new Reads[DateTime] {
+    def reads(json: JsValue): JsResult[DateTime] = {
+      Try(json.validate[String].map(DateTime.parse))
+        .recover { case e => JsError("wrong ISO8601 date format") }
+        .get
+    }
+  }
+
   implicit val createTaskReads =
     ((__ \ "input").read[JsObject] and
       (__ \ "type").read[String] and
+      (__ \ "start_deadline").readNullable[DateTime] and
+      (__ \ "completion_deadline").readNullable[DateTime] and
       (__ \ "role").readNullable[String] and
       (__ \ "user_id").readNullable[Int].map(_.map(_.toString)) and
       (__ \ "delegated_user").readNullable[String])(CreateTask.apply _)

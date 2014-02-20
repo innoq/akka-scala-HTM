@@ -8,7 +8,7 @@ class TaskManager extends Actor with ActorLogging {
   var tasks = Map.empty[String, ActorRef]
 
   def receive = {
-    case CreateTask(input, taskType, role, userId, delegateUser) => {
+    case CreateTask(input, taskType, start, end, role, userId, delegateUser) => {
       log.debug("create task with data " + input)
       val task = this.context.actorOf(Task.props())
       val actorUUID = UUID.randomUUID()

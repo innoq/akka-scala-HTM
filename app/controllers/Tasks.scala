@@ -19,13 +19,16 @@ object Tasks extends DefaultController {
 
   def createTaskAction = Action.async(parse.json) { request =>
     val task = (request.body \ "task").validate[JsObject].flatMap(task => Json.fromJson[CreateTask](task))
-    task.fold(error => Future.successful(BadRequest), createTask)
+    task.fold(error => {
+      Logger.warn("task creation failed" + error.toString())
+      Future.successful(BadRequest)
+    }, createTask)
   }
 
   def createTask(task: CreateTask) = {
     Logger.info("new task " + task)
     val result = ask(taskManagerActor, task).mapTo[TaskInitialized]
-    result.map { task => Ok(taskToJson(task.taskModel)) }
+    result.map { task => Ok(taskToJson(task.taskModel)) }.recover { case e: Exception => InternalServerError(failure(e)) }
   }
 
   def claim(taskId: String) = Action.async(parse.json) { request =>

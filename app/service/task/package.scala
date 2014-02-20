@@ -1,5 +1,6 @@
 package service
 
+import _root_.org.joda.time.DateTime
 import play.api.libs.json.{ Json, JsObject }
 
 package object task {
@@ -7,7 +8,7 @@ package object task {
   // TaskManager
   // commands
   sealed trait TaskManagerCommands
-  case class CreateTask(input: TaskData, taskType: String, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None) extends TaskManagerCommands
+  case class CreateTask(input: TaskData, taskType: String, startDeadline: Option[DateTime], completionDeadline: Option[DateTime], role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None) extends TaskManagerCommands
   case class TaskLookup(taskId: String)
   case class TaskCommand(taskId: String, command: Command) extends TaskManagerCommands
 
