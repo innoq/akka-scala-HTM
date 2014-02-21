@@ -5,6 +5,8 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsArray
 import play.api.data.validation.ValidationError
 import play.api.i18n.Messages
+import play.api.http.Writeable
+import play.api.mvc.Codec
 
 trait ResponseBuilder {
 
@@ -28,10 +30,13 @@ trait ResponseBuilder {
   }
 
   def halDocument[T](content: T, links: (String, { def url: String })*)(implicit cw: Writes[T]) = {
-    Json.toJson(HalDocument(
+    HalDocument(
       HalLinks(links.toVector.map { case (name, link) => HalLink(name, link) }),
-      Json.toJson(content)(cw).as[JsObject]))(DomainSerializers.halDocumentWrites)
+      Json.toJson(content)(cw).as[JsObject])
   }
+
+  implicit def halWriter(implicit code: Codec): Writeable[HalDocument] =
+    Writeable(d => code.encode(Json.toJson(d)(DomainSerializers.halDocumentWrites).toString()), Some("application/hal+json"))
 
   def failure(e: Exception) = Json.obj("error" -> e.getMessage)
 
