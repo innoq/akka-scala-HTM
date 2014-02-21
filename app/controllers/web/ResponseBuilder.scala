@@ -27,6 +27,12 @@ trait ResponseBuilder {
     Json.obj("validation" -> JsObject(errorFields))
   }
 
+  def halDocument[T](content: T, links: (String, { def url: String })*)(implicit cw: Writes[T]) = {
+    Json.toJson(HalDocument(
+      HalLinks(links.toVector.map { case (name, link) => HalLink(name, link) }),
+      Json.toJson(content)(cw).as[JsObject]))(DomainSerializers.halDocumentWrites)
+  }
+
   def failure(e: Exception) = Json.obj("error" -> e.getMessage)
 
 }

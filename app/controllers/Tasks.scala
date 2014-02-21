@@ -28,16 +28,15 @@ object Tasks extends DefaultController {
   def createTask(task: CreateTask) = {
     Logger.info("new task " + task)
     val result = ask(taskManagerActor, task).mapTo[TaskInitialized]
-    result.map { task => Created(Json.toJson(halDocument(task.taskModel))) }
-      .recover { case e: Exception => InternalServerError(failure(e)) }
-  }
-
-  def halDocument(taskModel: TaskModel) = {
-    HalDocument(HalLinks.links(
-      HalLink("claim", routes.Tasks.claim(taskModel.id)),
-      HalLink("skip", routes.Tasks.skip(taskModel.id)),
-      HalLink("self", routes.Tasks.lookup(taskModel.id))),
-      Json.toJson(taskModel).as[JsObject])
+    result.map { task =>
+      Created {
+        val id = task.taskModel.id
+        halDocument(task.taskModel,
+          "claim" -> routes.Tasks.claim(id),
+          "skip" -> routes.Tasks.skip(id),
+          "self" -> routes.Tasks.lookup(id))
+      }
+    }.recover { case e: Exception => InternalServerError(failure(e)) }
   }
 
   def claim(taskId: String) = Action.async(parse.json) { request =>
