@@ -32,7 +32,7 @@ object Tasks extends DefaultController {
       Created {
         hal(task.taskModel, links(new TaskView(task.taskModel, task.state)))
       }
-    }.recover { case e: Exception => InternalServerError(failure(e)) }
+    }
   }
 
   def claim(taskId: String) = Action.async(parse.json) { request =>
@@ -105,7 +105,7 @@ object Tasks extends DefaultController {
   }
 
   def askDefault(ref: ActorSelection, msg: AnyRef)(handle: Any => SimpleResult) = {
-    ask(ref, msg).map(handle).recover { case e: Exception => InternalServerError(failure(e)) }
+    ask(ref, msg).map(handle)
   }
 
   def taskManagerActor = Akka.system.actorSelection(TaskManager.actorPath)
