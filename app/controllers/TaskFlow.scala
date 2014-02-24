@@ -11,7 +11,7 @@ import scala.concurrent.Future
 import controllers.web.DefaultController
 import controllers.web.HalLinkBuilder._
 
-object Tasks extends DefaultController {
+object TaskFlow extends DefaultController {
 
   def createTaskAction = Action.async(parse.json) { request =>
     val task = Json.fromJson(request.body)(taskAttributeReads).flatMap(task => Json.fromJson[CreateTask](task))
@@ -35,42 +35,43 @@ object Tasks extends DefaultController {
     Logger.info(s"claim task $taskId")
     (request.body \ "user").asOpt[String]
       .fold(Future.successful(BadRequest(error("missing user attribute")))) { user =>
-        stateChange(taskId, Claim(user)) { task =>
-          Ok(hal(task, links(task)))
-        }
+        stateChangeWithDefaultLinks(taskId, Claim(user))
       }
   }
 
   def start(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"start working on task $taskId")
-    stateChange(taskId, Start) { task =>
-      Ok(hal(task, links(task)))
-    }
+    stateChangeWithDefaultLinks(taskId, Start)
   }
 
   def complete(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"complete task $taskId")
     (request.body \ "output").asOpt[JsObject]
       .fold(stateChange(taskId, Complete(EmptyTaskData))(a => Ok)) { output =>
-        stateChange(taskId, Complete(output))(task => Ok(hal(task, links(task))))
+        stateChangeWithDefaultLinks(taskId, Complete(output))
       }
   }
 
   def release(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"release task $taskId")
-    stateChange(taskId, Release) { task =>
-      Ok(hal(task, links(task)))
-    }
+    stateChangeWithDefaultLinks(taskId, Release)
   }
 
   def stop(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"stop work on task $taskId")
-    stateChange(taskId, Stop)(task => Ok(hal(task, links(task))))
+    stateChangeWithDefaultLinks(taskId, Stop)
   }
 
   def skip(taskId: String) = Action.async(parse.json) { request =>
     Logger.info(s"skip task $taskId")
-    stateChange(taskId, Skip)(task => Ok(hal(task, links(task))))
+    stateChangeWithDefaultLinks(taskId, Skip)
+  }
+
+  def stateChangeWithDefaultLinks(taskId: String, command: Command): Future[SimpleResult] = {
+    stateChange(taskId, command) {
+      task =>
+        Ok(hal(task, links(task)))
+    }
   }
 
   def stateChange(taskId: String, msg: Command)(render: TaskView => SimpleResult) = {

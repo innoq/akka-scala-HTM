@@ -7,17 +7,17 @@ object HalLinkBuilder {
 
   def self(id: String) = "self" -> routes.TaskView.lookup(id)
 
-  def claim(id: String) = "claim" -> routes.Tasks.claim(id)
+  def claim(id: String) = "claim" -> routes.TaskFlow.claim(id)
 
-  def skip(id: String) = "skip" -> routes.Tasks.skip(id)
+  def skip(id: String) = "skip" -> routes.TaskFlow.skip(id)
 
-  def start(id: String) = "start" -> routes.Tasks.start(id)
+  def start(id: String) = "start" -> routes.TaskFlow.start(id)
 
-  def release(id: String) = "release" -> routes.Tasks.release(id)
+  def release(id: String) = "release" -> routes.TaskFlow.release(id)
 
-  def complete(id: String) = "complete" -> routes.Tasks.complete(id)
+  def complete(id: String) = "complete" -> routes.TaskFlow.complete(id)
 
-  def stop(id: String) = "stop" -> routes.Tasks.stop(id)
+  def stop(id: String) = "stop" -> routes.TaskFlow.stop(id)
 
   def links(task: TaskView) = {
     val id = task.id

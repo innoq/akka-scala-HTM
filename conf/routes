@@ -6,19 +6,19 @@
 GET         /                         controllers.Application.index
 
 # Tasks resource
-POST        /tasks                    controllers.Tasks.createTaskAction
+POST        /tasks                    controllers.TaskFlow.createTaskAction
 
-POST        /task/:id/assignee        controllers.Tasks.claim(id)
+POST        /task/:id/assignee        controllers.TaskFlow.claim(id)
 
-POST        /task/:id/process         controllers.Tasks.start(id)
+POST        /task/:id/process         controllers.TaskFlow.start(id)
 
-POST        /task/:id/done            controllers.Tasks.complete(id)
+POST        /task/:id/done            controllers.TaskFlow.complete(id)
 
-POST        /task/:id/release         controllers.Tasks.release(id)
+POST        /task/:id/release         controllers.TaskFlow.release(id)
 
-POST        /task/:id/stop            controllers.Tasks.stop(id)
+POST        /task/:id/stop            controllers.TaskFlow.stop(id)
 
-POST        /task/:id/skip            controllers.Tasks.skip(id)
+POST        /task/:id/skip            controllers.TaskFlow.skip(id)
 
 GET         /task/:id                 controllers.TaskView.lookup(id)
 

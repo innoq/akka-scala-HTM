@@ -18,7 +18,7 @@ object Application extends DefaultController {
   }
 
   def halIndex = {
-    Ok(halLinks("self" -> routes.Application.index(), "tasks" -> routes.Tasks.createTaskAction())).as(Hal.accept.mimeType)
+    Ok(halLinks("self" -> routes.Application.index(), "tasks" -> routes.TaskFlow.createTaskAction())).as(Hal.accept.mimeType)
   }
 
   def html = {
@@ -26,7 +26,7 @@ object Application extends DefaultController {
   }
 
   def json(implicit request: Request[_]) = {
-    val url = routes.Tasks.createTaskAction.absoluteURL()
+    val url = routes.TaskFlow.createTaskAction.absoluteURL()
     val json = Json.toJson(
       Map("resources" ->
         Map("tasks" ->

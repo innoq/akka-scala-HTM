@@ -2,18 +2,11 @@ package controllers.web
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.api.libs.json.JsString
-import play.api.libs.json.JsObject
 import service.task._
-import controllers.Tasks.TaskReply
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
-import service.task.TaskListReadModelActor.Protocol.TaskList
 import service.task.TaskListReadModelActor.Protocol.TaskList
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import service.task.CreateTask
-import play.api.Logger
 import org.joda.time.DateTime
 import scala.util.Try
 
