@@ -66,14 +66,18 @@ trait DomainSerializers {
       (__ \ "output").write[TaskData]
     )(unlift(TaskModel.unapply))
 
-  implicit val halDocumentWrites = new Writes[HalDocument] {
+  implicit val halDocumentWrites: Writes[HalDocument] = new Writes[HalDocument] {
     def writes(hal: HalDocument): JsValue = {
       val halLinks = hal.links.links.map { link =>
         val href = Json.obj("href" -> JsString(link.href.url))
         val links = if (link.templated) href + ("templated" -> JsBoolean(true)) else href
         link.name -> links
       }
-      Json.obj("_links" -> JsObject(halLinks)) ++ hal.document
+      val embedded = hal.embedded.map {
+        case (link, resources) =>
+          Json.obj(link -> Json.toJson(resources.map(r => Json.toJson(r)(halDocumentWrites))))
+      }
+      Json.obj("_links" -> JsObject(halLinks), "_embedded" -> embedded) ++ hal.document
     }
   }
 

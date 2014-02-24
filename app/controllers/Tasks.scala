@@ -94,7 +94,12 @@ object Tasks extends DefaultController {
 
   def list(userId: Option[String]) = Action.async { request =>
     askDefault(readModelActor, GetTaskList(userId)) {
-      case tasks: TaskList => Ok(toJson(tasks))
+      case tasks: TaskList => Ok {
+        val taskHalResources = tasks.elems.map(task => hal(task, links(task)))
+        hal(Json.obj("amount" -> tasks.elems.size),
+          embedded = "tasks" -> taskHalResources.toVector,
+          links = "self" -> routes.Tasks.list(None))
+      }
       case TaskListUnavailable => ServiceUnavailable(error("task list is not available; try again later"))
     }
   }
