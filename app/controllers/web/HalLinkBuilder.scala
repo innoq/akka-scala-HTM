@@ -5,7 +5,7 @@ import controllers.routes
 
 object HalLinkBuilder {
 
-  def self(id: String) = "self" -> routes.Tasks.lookup(id)
+  def self(id: String) = "self" -> routes.TaskView.lookup(id)
 
   def claim(id: String) = "claim" -> routes.Tasks.claim(id)
 

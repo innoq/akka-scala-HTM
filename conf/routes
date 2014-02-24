@@ -20,9 +20,9 @@ POST        /task/:id/stop            controllers.Tasks.stop(id)
 
 POST        /task/:id/skip            controllers.Tasks.skip(id)
 
-GET         /task/:id                 controllers.Tasks.lookup(id)
+GET         /task/:id                 controllers.TaskView.lookup(id)
 
-GET         /tasks                    controllers.Tasks.list(user_id : Option[String])
+GET         /tasks                    controllers.TaskView.list(user_id : Option[String])
 
 GET         /browser                  controllers.Application.apiBrowser
 

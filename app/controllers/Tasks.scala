@@ -2,17 +2,13 @@ package controllers
 
 import akka.pattern.ask
 import play.api._
-import play.api.Play.current
 import play.api.mvc._
-import play.api.libs.concurrent._
 import service.task._
 import scala.concurrent.ExecutionContext.Implicits.global
 import service.task.Task.Protocol._
-import service.task.TaskListReadModelActor.Protocol._
 import play.api.libs.json._
 import scala.concurrent.Future
 import controllers.web.DefaultController
-import akka.actor.ActorSelection
 import controllers.web.HalLinkBuilder._
 
 object Tasks extends DefaultController {
@@ -84,31 +80,4 @@ object Tasks extends DefaultController {
       case e: NoSuchTask => NotFound
     }
   }
-
-  def lookup(taskId: String) = Action.async { request =>
-    askDefault(readModelActor, GetTask(taskId)) {
-      case TaskList(tasks) if !tasks.isEmpty => Ok(Json.toJson(tasks.head))
-      case e: NotFound => NotFound
-    }
-  }
-
-  def list(userId: Option[String]) = Action.async { request =>
-    askDefault(readModelActor, GetTaskList(userId)) {
-      case tasks: TaskList => Ok {
-        val taskHalResources = tasks.elems.map(task => hal(task, links(task)))
-        hal(Json.obj("amount" -> tasks.elems.size),
-          embedded = "tasks" -> taskHalResources.toVector,
-          links = "self" -> routes.Tasks.list(None))
-      }
-      case TaskListUnavailable => ServiceUnavailable(error("task list is not available; try again later"))
-    }
-  }
-
-  def askDefault(ref: ActorSelection, msg: AnyRef)(handle: Any => SimpleResult) = {
-    ask(ref, msg).map(handle)
-  }
-
-  def taskManagerActor = Akka.system.actorSelection(TaskManager.actorPath)
-
-  def readModelActor = Akka.system.actorSelection(TaskListReadModelActor.actorPath)
 }
