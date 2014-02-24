@@ -47,6 +47,8 @@ trait ResponseBuilder {
   implicit def halWriter(implicit code: Codec): Writeable[HalDocument] =
     Writeable(d => code.encode(Json.toJson(d)(DomainSerializers.halDocumentWrites).toString()), Some("application/hal+json"))
 
-  def failure(e: Throwable) = Json.obj("error" -> e.getMessage)
+  def failure(e: Throwable) =
+    if(play.Play.isProd) Json.obj("error" -> "application issue")
+    else Json.obj("error" -> e.getMessage)
 
 }
