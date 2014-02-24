@@ -33,4 +33,8 @@ object Application extends DefaultController {
           Map("href" -> url))))
     Ok(json).as(AcceptsJsonHome.mimeType)
   }
+
+  def apiBrowser = Action { request =>
+    MovedPermanently("http://" + request.host + "/assets/browser/browser.html")
+  }
 }
