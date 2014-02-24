@@ -29,6 +29,8 @@ trait ResponseBuilder {
     Json.obj("validation" -> JsObject(errorFields))
   }
 
+  def halLinks(links: (String, { def url: String })*) = hal(JsObject(Nil), links.toVector)
+
   def hal[T](content: T, embedded: (String, Vector[HalDocument]), links: (String, { def url: String })*)(implicit cw: Writes[T]): HalDocument = {
     val (name, elems) = embedded
     hal(content, links.toVector, Vector(name -> elems))

@@ -2,9 +2,10 @@ package controllers.web
 
 import scala._
 import play.api.libs.json.JsObject
+import play.api.mvc.Accepting
 
-object HalLinks {
-  def links(links: HalLink*) = HalLinks(links.toVector)
+object Hal {
+  val accept = Accepting("application/hal+json")
 }
 
 case class HalDocument(links: HalLinks, document: JsObject, embedded: Vector[(String, Vector[HalDocument])] = Vector.empty)

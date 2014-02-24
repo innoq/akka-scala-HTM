@@ -3,15 +3,22 @@ package controllers
 import play.api._
 import play.api.mvc._
 import play.api.libs.json.Json
-import controllers.web.DefaultController
+import controllers.web.{ Hal, DefaultController }
 
 object Application extends DefaultController {
+
+  val AcceptsJsonHome = Accepting("application/json-home")
 
   def index = Action { implicit request =>
     render {
       case Accepts.Html() => html
-      case Accepts.Json() => json
+      case Hal.accept() => halIndex
+      case AcceptsJsonHome() | Accepts.Json() => json
     }
+  }
+
+  def halIndex = {
+    Ok(halLinks("self" -> routes.Application.index(), "tasks" -> routes.Tasks.createTaskAction())).as(Hal.accept.mimeType)
   }
 
   def html = {
@@ -24,6 +31,6 @@ object Application extends DefaultController {
       Map("resources" ->
         Map("tasks" ->
           Map("href" -> url))))
-    Ok(json)
+    Ok(json).as(AcceptsJsonHome.mimeType)
   }
 }

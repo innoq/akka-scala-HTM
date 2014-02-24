@@ -77,7 +77,8 @@ trait DomainSerializers {
         case (link, resources) =>
           Json.obj(link -> Json.toJson(resources.map(r => Json.toJson(r)(halDocumentWrites))))
       }
-      Json.obj("_links" -> JsObject(halLinks), "_embedded" -> embedded) ++ hal.document
+      val document = Json.obj("_links" -> JsObject(halLinks)) ++ hal.document
+      if (embedded.isEmpty) document else document + ("_embedded" -> Json.toJson(embedded))
     }
   }
 
