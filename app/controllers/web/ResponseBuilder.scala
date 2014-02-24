@@ -29,7 +29,13 @@ trait ResponseBuilder {
     Json.obj("validation" -> JsObject(errorFields))
   }
 
-  def halDocument[T](content: T, links: (String, { def url: String })*)(implicit cw: Writes[T]) = {
+  def halLinks[T](content: T, links: (String, { def url: String })*)(implicit cw: Writes[T]) = {
+    HalDocument(
+      HalLinks(links.toVector.map { case (name, link) => HalLink(name, link) }),
+      Json.toJson(content)(cw).as[JsObject])
+  }
+
+  def hal[T](content: T, links: Vector[(String, { def url: String })])(implicit cw: Writes[T]) = {
     HalDocument(
       HalLinks(links.toVector.map { case (name, link) => HalLink(name, link) }),
       Json.toJson(content)(cw).as[JsObject])
