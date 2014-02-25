@@ -3,11 +3,12 @@ import play.api._
 import play.api.mvc._
 import play.api.Play.current
 import play.api.libs.concurrent._
+import play.filters.gzip.GzipFilter
 import scala.concurrent.Future
 import service.org.OrgService
 import service.task.{ TaskListReadModelActor, TaskManager }
 
-object Global extends GlobalSettings with Rendering with AcceptExtractors with ResponseBuilder with Results {
+object Global extends WithFilters(new GzipFilter()) with GlobalSettings with Rendering with AcceptExtractors with ResponseBuilder with Results {
 
   override def onStart(app: Application) {
     Akka.system.actorOf(TaskManager.props(), name = TaskManager.actorName)

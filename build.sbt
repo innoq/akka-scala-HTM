@@ -6,6 +6,7 @@ version := "1.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
   cache,
+  filters,
   "com.typesafe.akka" % "akka-testkit_2.10" % "2.2.0",
   "com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full,
   "com.softwaremill.macwire" %% "macros" % "0.5",
