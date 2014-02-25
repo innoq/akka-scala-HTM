@@ -35,6 +35,6 @@ object Application extends DefaultController {
   }
 
   def apiBrowser = Action { request =>
-    MovedPermanently("http://" + request.host + "/assets/browser/browser.html")
+    SeeOther("http://" + request.host + "/assets/browser/browser.html")
   }
 }
