@@ -14,7 +14,7 @@ object TaskView extends DefaultController {
 
   def lookup(taskId: String) = Action.async { request =>
     askDefault(readModelActor, GetTask(taskId)) {
-      case TaskList(tasks) if !tasks.isEmpty => Ok(Json.toJson(tasks.head))
+      case TaskList(tasks) if !tasks.isEmpty => Ok(hal(tasks.head, links(tasks.head)))
       case e: NotFound => NotFound
     }
   }
