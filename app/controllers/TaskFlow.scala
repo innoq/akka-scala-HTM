@@ -13,7 +13,7 @@ import controllers.web.HalLinkBuilder._
 
 object TaskFlow extends DefaultController {
 
-  def createTaskAction = Action.async(parse.json) { request =>
+  def createTaskAction = Action.async(parse.json) { implicit request =>
     val task = Json.fromJson(request.body)(taskAttributeReads).flatMap(task => Json.fromJson[CreateTask](task))
     task.fold(errorMsg => {
       Logger.warn("task creation failed" + errorMsg.toString())
@@ -21,13 +21,13 @@ object TaskFlow extends DefaultController {
     }, createTask)
   }
 
-  def createTask(task: CreateTask) = {
+  def createTask(task: CreateTask)(implicit request: Request[_]) = {
     Logger.info("new task " + task)
     val result = ask(taskManagerActor, task).mapTo[TaskInitialized]
     result.map { task =>
       Created {
         hal(task.taskModel, links(new TaskView(task.taskModel, task.state)))
-      }
+      }.withHeaders("Location" -> routes.TaskView.lookup(task.taskModel.id).absoluteURL())
     }
   }
 
