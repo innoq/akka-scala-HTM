@@ -74,10 +74,10 @@ trait DomainSerializers {
     def writes(hal: HalDocument): JsValue = {
       val embedded = hal.embedded.map {
         case (link, resources) =>
-          Json.obj(link -> Json.toJson(resources.map(r => Json.toJson(r)(halDocumentWrites))))
+          link -> Json.toJson(resources.map(r => Json.toJson(r)(halDocumentWrites)))
       }
       val document = Json.toJson(hal.links).as[JsObject] ++ hal.document
-      if (embedded.isEmpty) document else document + ("_embedded" -> Json.toJson(embedded))
+      if (embedded.isEmpty) document else document + ("_embedded" -> JsObject(embedded))
     }
   }
 
