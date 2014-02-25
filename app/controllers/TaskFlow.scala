@@ -67,11 +67,8 @@ object TaskFlow extends DefaultController {
     stateChangeWithDefaultLinks(taskId, Skip)
   }
 
-  def stateChangeWithDefaultLinks(taskId: String, command: Command): Future[SimpleResult] = {
-    stateChange(taskId, command) {
-      task =>
-        Ok(hal(task, links(task)))
-    }
+  def stateChangeWithDefaultLinks(taskId: String, command: Command) = {
+    stateChange(taskId, command)(task => Ok(hal(task, links(task))))
   }
 
   def stateChange(taskId: String, msg: Command)(render: TaskView => SimpleResult) = {
