@@ -4,13 +4,9 @@ import service.task.Task.Protocol._
 import service.task.Task.Protocol.TaskClaimed
 import service.task.Task.Protocol.TaskInitialized
 import akka.actor.{ ActorLogging, FSM, Actor, Props }
+import service.task
 
 class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
-
-  def publishing(state: TaskEvent) = {
-    context.system.eventStream.publish(state)
-    state
-  }
 
   startWith(Created, UninitializedData(""))
 
@@ -60,10 +56,22 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   }
 
   onTransition {
-    case e => log.debug(s"task ${this.stateData.taskId} transition => $e")
+    case (from, to) if to.isFinalState => {
+      context.parent ! TaskDone(this.stateData.taskId, to)
+    }
+    case e => logTransition(e)
+  }
+
+  def logTransition(e: (task.TaskState, task.TaskState)) {
+    log.debug(s"task ${this.stateData.taskId} transition => $e")
   }
 
   initialize()
+
+  def publishing(state: TaskEvent) = {
+    context.system.eventStream.publish(state)
+    state
+  }
 
 }
 
@@ -85,6 +93,9 @@ object Task {
       def taskModel = TaskModel.default(taskId)
     }
     case class InvalidCommandRejected(cmd: Command, state: TaskState, taskId: String) extends TaskEvent {
+      def taskModel = TaskModel.default(taskId)
+    }
+    case class TaskDone(taskId: String, state: TaskState) extends TaskEvent {
       def taskModel = TaskModel.default(taskId)
     }
   }
