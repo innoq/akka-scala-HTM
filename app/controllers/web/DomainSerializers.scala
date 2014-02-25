@@ -52,6 +52,8 @@ trait DomainSerializers {
   implicit val taskModelWrites: Writes[TaskModel] =
     ((__ \ "id").write[String] and
       (__ \ "taskType").write[String] and
+      (__ \ "start_deadline").writeNullable[DateTime] and
+      (__ \ "completion_deadline").writeNullable[DateTime] and
       (__ \ "role").writeNullable[String] and
       (__ \ "user_id").writeNullable[String] and
       (__ \ "delegated_user").writeNullable[String] and
