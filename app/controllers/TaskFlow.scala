@@ -39,7 +39,7 @@ object TaskFlow extends DefaultController {
       }
   }
 
-  def start(taskId: String) = Action.async(parse.json) { request =>
+  def start(taskId: String) = Action.async { request =>
     Logger.info(s"start working on task $taskId")
     stateChangeWithDefaultLinks(taskId, Start)
   }
@@ -52,17 +52,17 @@ object TaskFlow extends DefaultController {
       }
   }
 
-  def release(taskId: String) = Action.async(parse.json) { request =>
+  def release(taskId: String) = Action.async { request =>
     Logger.info(s"release task $taskId")
     stateChangeWithDefaultLinks(taskId, Release)
   }
 
-  def stop(taskId: String) = Action.async(parse.json) { request =>
+  def stop(taskId: String) = Action.async { request =>
     Logger.info(s"stop work on task $taskId")
     stateChangeWithDefaultLinks(taskId, Stop)
   }
 
-  def skip(taskId: String) = Action.async(parse.json) { request =>
+  def skip(taskId: String) = Action.async { request =>
     Logger.info(s"skip task $taskId")
     stateChangeWithDefaultLinks(taskId, Skip)
   }
