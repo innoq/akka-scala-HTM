@@ -22,6 +22,10 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
       val model = taskModel.copy(userId = Some(userId))
       goto(Reserved) using ClaimedData(model) replying publishing(TaskClaimed(Reserved, model))
     }
+    case Event(ReClaim(userId), InitialData(taskModel)) => {
+      val model = taskModel.copy(userId = Some(userId))
+      goto(Reserved) using ClaimedData(model) replying publishing(TaskClaimed(Reserved, model))
+    }
   }
 
   when(Reserved) {
@@ -29,6 +33,10 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
       goto(InProgress) replying publishing(TaskStarted(InProgress, data.taskData))
     case Event(Release, ClaimedData(model)) =>
       goto(Ready) using InitialData(model) replying publishing(TaskReleased(Ready, model))
+    case Event(ReClaim(userId), ClaimedData(model)) => {
+      val uModel = model.copy(userId = Some(userId))
+      stay using ClaimedData(uModel) replying publishing(TaskReClaimed(Reserved, uModel))
+    }
   }
 
   when(InProgress) {
@@ -38,6 +46,10 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
     }
     case Event(Stop, ClaimedData(taskData)) =>
       goto(Reserved) replying publishing(TaskStopped(Reserved, taskData))
+    case Event(ReClaim(userId), ClaimedData(taskData)) => {
+      val newTaskData = taskData.copy(userId = Some(userId))
+      goto(Reserved) using ClaimedData(newTaskData) replying publishing(TaskReClaimed(Reserved, newTaskData))
+    }
   }
 
   when(Obsolete) {
@@ -85,6 +97,7 @@ object Task {
     }
     case class TaskInitialized(state: TaskState, taskModel: TaskModel) extends TaskEvent
     case class TaskClaimed(state: TaskState, taskModel: TaskModel) extends TaskEvent
+    case class TaskReClaimed(state: TaskState, taskModel: TaskModel) extends TaskEvent
     case class TaskStarted(state: TaskState, taskModel: TaskModel) extends TaskEvent
     case class TaskReleased(state: TaskState, taskModel: TaskModel) extends TaskEvent
     case class TaskCompleted(state: TaskState, taskModel: TaskModel) extends TaskEvent

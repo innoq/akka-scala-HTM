@@ -46,6 +46,7 @@ package object task {
   sealed trait Command
   case class Init(taskId: String, taskType: String, startDeadline: Option[DateTime], completionDeadline: Option[DateTime], input: TaskData = EmptyTaskData, role: Option[String] = None, userId: Option[String] = None, delegatedUser: Option[String] = None)
   case class Claim(userId: String) extends Command
+  case class ReClaim(userId: String) extends Command
   case object Release extends Command
   case object Start extends Command
   case object Stop extends Command

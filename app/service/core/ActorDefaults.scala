@@ -5,8 +5,9 @@ import akka.pattern.CircuitBreaker
 import concurrent.duration._
 import play.api.libs.ws.{ WS, Response }
 import scala.concurrent.Future
+import controllers.web.Defaults
 
-trait ActorDefaults { self: Actor =>
+trait ActorDefaults extends Defaults { self: Actor =>
 
   implicit val ec = context.dispatcher
 

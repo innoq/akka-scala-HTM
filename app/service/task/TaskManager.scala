@@ -4,15 +4,9 @@ import akka.actor._
 import java.util.UUID
 import org.joda.time.{ Duration => DTDuration, DateTime }
 import scala.concurrent.duration._
-import service.escalation.EscalationService.Protocol.Escalate
-import service.task.Task.Protocol.TaskDone
-import service.task.NoSuchTask
-import service.task.Init
-import service.task.CreateTask
 import service.task.Task.Protocol.TaskDone
 import service.escalation.EscalationService.Protocol.Escalate
 import scala.Some
-import service.task.TaskCommand
 
 private[task] case class TaskManageData(ref: ActorRef, completionDeadline: Option[Cancellable])
 
@@ -30,7 +24,7 @@ class TaskManager(val escalationService: ActorRef) extends Actor with ActorLoggi
       val taskId = UUID.randomUUID().toString
       taskActor forward Init(taskId, taskType, startDeadline, endDeadline, input, role, userId, delegateUser)
 
-      val cancel = startDeadline.map(dl => scheduleDeadlineWatch(taskId, dl))
+      val cancel = startDeadline.map(dl => scheduleDeadlineWatch(taskId, taskActor, dl))
 
       tasks = tasks + (taskId -> TaskManageData(taskActor, cancel))
     }
@@ -58,11 +52,11 @@ class TaskManager(val escalationService: ActorRef) extends Actor with ActorLoggi
     }
   }
 
-  def scheduleDeadlineWatch(id: String, completionDeadline: DateTime): Cancellable = {
+  def scheduleDeadlineWatch(id: String, taskActor: ActorRef, completionDeadline: DateTime): Cancellable = {
     val timeToEscalation = new DTDuration(DateTime.now(), completionDeadline).getStandardMinutes
     val minutes = timeToEscalation.minutes
     log.debug(s"task $id has to be be completed in $minutes, schedule escalation")
-    context.system.scheduler.scheduleOnce(minutes, escalationService, Escalate(id))
+    context.system.scheduler.scheduleOnce(minutes, escalationService, Escalate(id, taskActor))
   }
 }
 

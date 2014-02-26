@@ -12,10 +12,10 @@ import service.task.{ TaskListReadModelActor, TaskManager }
 object Global extends WithFilters(new GzipFilter()) with GlobalSettings with Rendering with AcceptExtractors with ResponseBuilder with Results {
 
   override def onStart(app: Application) {
-    val escService = Akka.system.actorOf(EscalationService.props(), name = EscalationService.actorName)
-    Akka.system.actorOf(TaskManager.props(escService), name = TaskManager.actorName)
     val orgService = Akka.system.actorOf(OrgService.props(), name = OrgService.actorName)
-    Akka.system.actorOf(TaskListReadModelActor.props(orgService), name = TaskListReadModelActor.actorName)
+    val taskList = Akka.system.actorOf(TaskListReadModelActor.props(orgService), name = TaskListReadModelActor.actorName)
+    val escService = Akka.system.actorOf(EscalationService.props(taskList), name = EscalationService.actorName)
+    Akka.system.actorOf(TaskManager.props(escService), name = TaskManager.actorName)
   }
 
   override def onBadRequest(request: RequestHeader, errorMsg: String) = {
