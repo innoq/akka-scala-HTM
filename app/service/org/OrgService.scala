@@ -1,44 +1,25 @@
 package service.org
 
 import akka.actor.{ ActorLogging, Props, Actor }
+import akka.pattern.pipe
 import service.task.{ TaskView, FilteredTask }
 import service.org.OrgService.Protocol.{ OrgServiceUnreachable, FilteredTasks, FilterTasks }
 import play.api.libs.ws.{ Response, WS }
 import play.api.libs.json._
-import akka.pattern.CircuitBreaker
-import akka.pattern.CircuitBreakerOpenException
 import controllers.web.DomainSerializers
+import service.core.ActorDefaults
+import akka.pattern.CircuitBreakerOpenException
 
-class OrgService extends Actor with ActorLogging {
-  import concurrent.duration._
-  import context.dispatcher
-  val breaker =
-    new CircuitBreaker(context.system.scheduler,
-      maxFailures = 5,
-      callTimeout = 10.seconds,
-      resetTimeout = 1.minute) onOpen notifyOnOpen
-
-  private def notifyOnOpen() = {
-    //
-  }
+class OrgService extends Actor with ActorLogging with ActorDefaults {
 
   def receive = {
     case FilterTasks(userId, tasks) if tasks.isEmpty => sender ! FilteredTasks(userId.toInt, Vector.empty)
     case FilterTasks(userId, tasks: Vector[TaskView]) =>
-      import context.dispatcher
-      import akka.pattern.pipe
-      val responseF = breaker withCircuitBreaker {
-        implicit val success = new retry.Success[Response](_.status == 200)
-        import retry.Defaults._
-        retry.Directly(3) { () =>
-          WS.url("http://localhost:3000/org").put(buildRequest(userId, tasks))
-        }
-      }
-      responseF map responseToFilteredTasks(userId) recover {
+      callWithRetry(WS.url("http://localhost:3000/org")
+        .put(buildRequest(userId, tasks))) map responseToFilteredTasks(userId) recover {
         case e: CircuitBreakerOpenException => OrgServiceUnreachable
       } pipeTo sender
   }
-
   private def responseToFilteredTasks(userId: String)(resp: Response): FilteredTasks = {
     import OrgService._
     log.info(resp.body)
