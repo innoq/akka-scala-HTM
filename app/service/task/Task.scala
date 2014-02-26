@@ -13,42 +13,42 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   when(Created) {
     case Event(Init(taskId, taskType, startDeadline, compDeadline, input, role, userId, delegate), data) => {
       val taskModel = TaskModel(taskId, taskType, startDeadline, compDeadline, role, userId, delegate, input)
-      goto(Ready) using InitialData(taskModel) replying publishing(TaskInitialized(Ready, taskModel))
+      goto(Ready) using ProcessData(taskModel) replying publishing(TaskInitialized(Ready, taskModel))
     }
   }
 
   when(Ready) {
-    case Event(Claim(userId), InitialData(taskModel)) => {
+    case Event(Claim(userId), ProcessData(taskModel)) => {
       val model = taskModel.copy(userId = Some(userId))
-      goto(Reserved) using ClaimedData(model) replying publishing(TaskClaimed(Reserved, model))
+      goto(Reserved) using ProcessData(model) replying publishing(TaskClaimed(Reserved, model))
     }
-    case Event(ReClaim(userId), InitialData(taskModel)) => {
+    case Event(ReClaim(userId), ProcessData(taskModel)) => {
       val model = taskModel.copy(userId = Some(userId))
-      goto(Reserved) using ClaimedData(model) replying publishing(TaskClaimed(Reserved, model))
+      goto(Reserved) using ProcessData(model) replying publishing(TaskClaimed(Reserved, model))
     }
   }
 
   when(Reserved) {
-    case Event(Start, data: ClaimedData) =>
+    case Event(Start, data: ProcessData) =>
       goto(InProgress) replying publishing(TaskStarted(InProgress, data.taskData))
-    case Event(Release, ClaimedData(model)) =>
-      goto(Ready) using InitialData(model) replying publishing(TaskReleased(Ready, model))
-    case Event(ReClaim(userId), ClaimedData(model)) => {
+    case Event(Release, ProcessData(model)) =>
+      goto(Ready) using ProcessData(model) replying publishing(TaskReleased(Ready, model))
+    case Event(ReClaim(userId), ProcessData(model)) => {
       val uModel = model.copy(userId = Some(userId))
-      stay using ClaimedData(uModel) replying publishing(TaskReClaimed(Reserved, uModel))
+      stay using ProcessData(uModel) replying publishing(TaskReClaimed(Reserved, uModel))
     }
   }
 
   when(InProgress) {
-    case Event(Complete(result), ClaimedData(taskData)) => {
+    case Event(Complete(result), ProcessData(taskData)) => {
       val newTaskData = taskData.copy(result = result)
-      goto(Completed) using CompletedData(newTaskData) replying publishing(TaskCompleted(Completed, newTaskData))
+      goto(Completed) using ProcessData(newTaskData) replying publishing(TaskCompleted(Completed, newTaskData))
     }
-    case Event(Stop, ClaimedData(taskData)) =>
+    case Event(Stop, ProcessData(taskData)) =>
       goto(Reserved) replying publishing(TaskStopped(Reserved, taskData))
-    case Event(ReClaim(userId), ClaimedData(taskData)) => {
+    case Event(ReClaim(userId), ProcessData(taskData)) => {
       val newTaskData = taskData.copy(userId = Some(userId))
-      goto(Reserved) using ClaimedData(newTaskData) replying publishing(TaskReClaimed(Reserved, newTaskData))
+      goto(Reserved) using ProcessData(newTaskData) replying publishing(TaskReClaimed(Reserved, newTaskData))
     }
   }
 

@@ -33,9 +33,7 @@ package object task {
     def taskId = taskData.id
   }
   case class UninitializedData(taskId: String) extends Data
-  case class InitialData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
-  case class ClaimedData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
-  case class CompletedData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
+  case class ProcessData(taskData: TaskModelImpl) extends Data with TaskIdDelegate
   case class EmptyData(taskId: String) extends Data
 
   type TaskData = JsObject

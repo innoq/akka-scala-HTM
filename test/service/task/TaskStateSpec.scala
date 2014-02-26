@@ -22,7 +22,7 @@ class TaskStateSpec extends Specification {
     "accept an init message which changes the state" in {
       val actorRef = TestActorRef[Task]
       actorRef ! Init("1", Map("test" -> "1"))
-      actorRef.underlyingActor.stateData === InitialData(TaskModel.withData("1", Map("test" -> "1")))
+      actorRef.underlyingActor.stateData === ProcessData(TaskModel.withData("1", Map("test" -> "1")))
       actorRef.underlyingActor.stateName === Ready
     }
   }
