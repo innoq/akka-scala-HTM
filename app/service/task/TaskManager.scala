@@ -38,7 +38,7 @@ class TaskManager(val escalationService: ActorRef) extends Actor with ActorLoggi
         case Some(TaskManageData(ref, _)) => ref forward command
       }
     }
-    case TaskDone(taskId, state) => {
+    case TaskDone(taskId, state, _) => {
       tasks.get(taskId) match {
         case None => {
           log.error(s"task done handling of task $taskId failed (task not managed by task manager)")

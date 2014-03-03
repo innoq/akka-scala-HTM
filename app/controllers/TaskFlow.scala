@@ -8,8 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import service.task.Task.Protocol._
 import play.api.libs.json._
 import scala.concurrent.Future
-import controllers.web.DefaultController
-import controllers.web.HalLinkBuilder._
+import controllers.web.{ SelfTask, Link, DefaultController }
 
 object TaskFlow extends DefaultController {
 
@@ -26,35 +25,27 @@ object TaskFlow extends DefaultController {
     val result = ask(taskManagerActor, task).mapTo[TaskInitialized]
     result.map { task =>
       Created {
-        hal(task.taskModel, links(new TaskView(task.taskModel, task.state)))
+        hal(task.taskModel, task.links)
       }.withHeaders("Location" -> routes.TaskView.lookup(task.taskModel.id).absoluteURL())
     }
   }
 
-  def claim(taskId: String) = Action.async(parse.json) { request =>
-    Logger.info(s"claim task $taskId")
+  def changeAssignee(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"set assignee for task task $taskId")
     (request.body \ "user").asOpt[String]
       .fold(Future.successful(BadRequest(error("missing user attribute")))) { user =>
         stateChangeWithDefaultLinks(taskId, Claim(user))
       }
   }
 
+  def removeAssignee(taskId: String) = Action.async { request =>
+    Logger.info(s"remove assignee for task task $taskId")
+    stateChangeWithDefaultLinks(taskId, Release)
+  }
+
   def start(taskId: String) = Action.async { request =>
     Logger.info(s"start working on task $taskId")
     stateChangeWithDefaultLinks(taskId, Start)
-  }
-
-  def complete(taskId: String) = Action.async(parse.json) { request =>
-    Logger.info(s"complete task $taskId")
-    (request.body \ "output").asOpt[JsObject]
-      .fold(stateChange(taskId, Complete(EmptyTaskData))(a => Ok)) { output =>
-        stateChangeWithDefaultLinks(taskId, Complete(output))
-      }
-  }
-
-  def release(taskId: String) = Action.async { request =>
-    Logger.info(s"release task $taskId")
-    stateChangeWithDefaultLinks(taskId, Release)
   }
 
   def stop(taskId: String) = Action.async { request =>
@@ -67,14 +58,22 @@ object TaskFlow extends DefaultController {
     stateChangeWithDefaultLinks(taskId, Skip)
   }
 
-  def stateChangeWithDefaultLinks(taskId: String, command: Command) = {
-    stateChange(taskId, command)(task => Ok(hal(task, links(task))))
+  def output(taskId: String) = Action.async(parse.json) { request =>
+    Logger.info(s"complete task $taskId")
+    (request.body \ "output").asOpt[JsObject]
+      .fold(stateChange(taskId, Complete(EmptyTaskData))((t, l) => Ok)) { output =>
+        stateChangeWithDefaultLinks(taskId, Complete(output))
+      }
   }
 
-  def stateChange(taskId: String, msg: Command)(render: TaskView => SimpleResult) = {
+  def stateChangeWithDefaultLinks(taskId: String, command: Command) = {
+    stateChange(taskId, command)((task, links) => Ok(hal(task, SelfTask(task.id) +: links)))
+  }
+
+  def stateChange(taskId: String, msg: Command)(render: (TaskView, Vector[Link]) => SimpleResult) = {
     askDefault(taskManagerActor, TaskCommand(taskId, msg)) {
       case e: InvalidCommandRejected => BadRequest(error("invalid state change rejected"))
-      case e: TaskEvent => render(new TaskView(e.taskModel, e.state))
+      case e: TaskEvent => render(new TaskView(e.taskModel, e.state), e.links)
       case e: NoSuchTask => NotFound
     }
   }

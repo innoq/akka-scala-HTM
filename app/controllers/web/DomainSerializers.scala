@@ -64,7 +64,7 @@ trait DomainSerializers {
   implicit val halLinkWrites = new Writes[HalLinks] {
     def writes(hal: HalLinks): JsValue = {
       val halLinks = hal.links.map { link =>
-        val href = Json.obj("href" -> JsString(link.href.url))
+        val href = Json.obj("href" -> JsString(link.href))
         val links = if (link.templated) href + ("templated" -> JsBoolean(true)) else href
         link.name -> links
       }

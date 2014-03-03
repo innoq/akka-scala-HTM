@@ -20,14 +20,14 @@ class TaskListReadModelActor(val orgServer: ActorRef) extends Actor with Default
 
   this.context.system.eventStream.subscribe(self, classOf[TaskEvent])
 
-  var model = Map.empty[String, TaskView]
+  var model = Map.empty[String, TaskLinkView]
 
   def receive = {
     case i: InvalidCommandRejected => {
       //don't update task model, continue
     }
     case s: TaskEvent => {
-      model = model + (s.taskModel.id -> new TaskView(s.taskModel, s.state))
+      model = model + (s.taskModel.id -> new TaskLinkView(s.taskModel, s.state, s.links))
     }
     case GetTaskList(userId) => {
       val taskViews = model.values.toVector
@@ -61,7 +61,7 @@ object TaskListReadModelActor {
     sealed trait Msg
     case class GetTaskList(userId: Option[String]) extends Msg
     case class GetTask(taskId: String) extends Msg
-    case class TaskList(elems: Seq[TaskView]) extends Msg
+    case class TaskList(elems: Seq[TaskLinkView]) extends Msg
     case class NotFound(taskId: String) extends Msg
     case object TaskListUnavailable extends Msg
   }

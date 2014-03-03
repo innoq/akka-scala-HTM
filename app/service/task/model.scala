@@ -1,6 +1,7 @@
 package service.task
 
 import org.joda.time.DateTime
+import controllers.web.Link
 
 trait TaskModel {
   def id: String
@@ -54,6 +55,10 @@ class TaskView(val taskModel: TaskModel, val taskState: TaskState) extends TaskM
   def taskData = taskModel.taskData
   def result = taskModel.result
   def delegatedUser = taskModel.delegatedUser
+}
+
+class TaskLinkView(taskModel: TaskModel, taskState: TaskState, val links: Vector[Link]) extends TaskView(taskModel, taskState) {
+
 }
 
 case class FilteredTask(id: String, reason: String)

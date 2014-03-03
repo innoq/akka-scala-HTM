@@ -3,28 +3,29 @@
 # ~~~~
 
 # Home page
-GET         /                         controllers.Application.index
+GET           /                         controllers.Application.index
 
 # Tasks resource
-POST        /tasks                    controllers.TaskFlow.createTaskAction
+POST          /tasks                    controllers.TaskFlow.createTaskAction
 
-POST        /task/:id/assignee        controllers.TaskFlow.claim(id)
+PUT           /task/:id/assignee        controllers.TaskFlow.changeAssignee(id)
 
-POST        /task/:id/process         controllers.TaskFlow.start(id)
+DELETE        /task/:id/assignee        controllers.TaskFlow.removeAssignee(id)
 
-POST        /task/:id/done            controllers.TaskFlow.complete(id)
+# start, stop, skip
+PUT           /task/:id/start           controllers.TaskFlow.start(id)
 
-POST        /task/:id/release         controllers.TaskFlow.release(id)
+PUT           /task/:id/stop            controllers.TaskFlow.stop(id)
 
-POST        /task/:id/stop            controllers.TaskFlow.stop(id)
+PUT           /task/:id/skip            controllers.TaskFlow.skip(id)
 
-POST        /task/:id/skip            controllers.TaskFlow.skip(id)
+PUT           /task/:id/output          controllers.TaskFlow.output(id)
 
-GET         /task/:id                 controllers.TaskView.lookup(id)
+GET           /task/:id                 controllers.TaskView.lookup(id)
 
-GET         /tasks                    controllers.TaskView.list(user_id : Option[String])
+GET           /tasks                    controllers.TaskView.list(user_id : Option[String])
 
-GET         /browser                  controllers.Application.apiBrowser
+GET           /browser                  controllers.Application.apiBrowser
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file             controllers.Assets.at(path="/public", file)
+GET           /assets/*file             controllers.Assets.at(path="/public", file)

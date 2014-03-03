@@ -29,17 +29,17 @@ trait ResponseBuilder {
     Json.obj("validation" -> JsObject(errorFields))
   }
 
-  def halLinks(links: (String, { def url: String })*) = hal(JsObject(Nil), links.toVector)
+  def halLinks(links: Link*) = hal(JsObject(Nil), links.toVector)
 
-  def hal[T](content: T, embedded: (String, Vector[HalDocument]), links: (String, { def url: String })*)(implicit cw: Writes[T]): HalDocument = {
+  def hal[T](content: T, embedded: (String, Vector[HalDocument]), links: Vector[Link])(implicit cw: Writes[T]): HalDocument = {
     val (name, elems) = embedded
-    hal(content, links.toVector, Vector(name -> elems))
+    hal(content, links, Vector(name -> elems))
   }
 
-  def hal[T](content: T, links: Vector[(String, { def url: String })], embedded: Vector[(String, Vector[HalDocument])] = Vector.empty)(implicit cw: Writes[T]): HalDocument = {
+  def hal[T](content: T, links: Vector[Link], embedded: Vector[(String, Vector[HalDocument])] = Vector.empty)(implicit cw: Writes[T]): HalDocument = {
     implicit val write = DomainSerializers.halDocumentWrites
     HalDocument(
-      HalLinks(links.toVector.map { case (name, link) => HalLink(name, link) }),
+      HalLinks(links.map { case Link(name, link) => HalLink(name, link) }),
       Json.toJson(content)(cw).as[JsObject],
       embedded)
   }
