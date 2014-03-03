@@ -67,7 +67,10 @@ object TaskFlow extends DefaultController {
   }
 
   def stateChangeWithDefaultLinks(taskId: String, command: Command) = {
-    stateChange(taskId, command)((task, links) => Ok(hal(task, SelfTask(task.id) +: links)))
+    stateChange(taskId, command) { (task, links) =>
+      val self = SelfTask(task.id)
+      Ok(hal(task, self +: links)).withHeaders("Content-Location" -> self.link)
+    }
   }
 
   def stateChange(taskId: String, msg: Command)(render: (TaskView, Vector[Link]) => SimpleResult) = {
