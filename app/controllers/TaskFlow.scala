@@ -75,6 +75,10 @@ object TaskFlow extends DefaultController {
       case e: InvalidCommandRejected => BadRequest(error("invalid state change rejected"))
       case e: TaskEvent => render(new TaskView(e.taskModel, e.state), e.links)
       case e: NoSuchTask => NotFound
+      case e: InvalidCommandRejected => BadRequest {
+        val err = error("task state transition not possible")
+        hal(err, Vector(SelfTask(e.taskId)))
+      }
     }
   }
 }
