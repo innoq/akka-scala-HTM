@@ -2,15 +2,15 @@ package service.task
 
 import akka.actor._
 import java.util.UUID
-import org.joda.time.{ Duration => DTDuration, DateTime }
-import scala.concurrent.duration._
 import service.task.Task.Protocol.TaskDone
-import service.escalation.EscalationService.Protocol.Escalate
+import service.escalation.Escalalator.Protocol.{ StopEscalation, InitEscalation }
 import scala.Some
+import service.escalation.Escalalator
+import org.joda.time.DateTime
 
-private[task] case class TaskManageData(ref: ActorRef, completionDeadline: Option[Cancellable])
+private[task] case class TaskManageData(ref: ActorRef, escalator: Option[ActorRef])
 
-class TaskManager(val escalationService: ActorRef) extends Actor with ActorLogging {
+class TaskManager extends Actor with ActorLogging {
 
   implicit val ec = context.dispatcher
 
@@ -24,9 +24,7 @@ class TaskManager(val escalationService: ActorRef) extends Actor with ActorLoggi
       val taskId = UUID.randomUUID().toString
       taskActor forward Init(taskId, taskType, startDeadline, endDeadline, input, role, userId, delegateUser)
 
-      val cancel = startDeadline.map(dl => scheduleDeadlineWatch(taskId, taskActor, dl))
-
-      tasks = tasks + (taskId -> TaskManageData(taskActor, cancel))
+      tasks = tasks + (taskId -> TaskManageData(taskActor, escalation(taskId, role, endDeadline, taskActor)))
     }
     case TaskCommand(taskId, command) => {
       log.debug(s"forward command $command to task $taskId")
@@ -43,20 +41,21 @@ class TaskManager(val escalationService: ActorRef) extends Actor with ActorLoggi
         case None => {
           log.error(s"task done handling of task $taskId failed (task not managed by task manager)")
         }
-        case Some(TaskManageData(ref, Some(compDeadline))) => {
+        case Some(TaskManageData(ref, Some(escalation))) => {
           log.debug(s"cancel deadline scheduler for task $taskId")
-          compDeadline.cancel()
+          escalation ! StopEscalation
         }
         case _ => ""
       }
     }
   }
 
-  def scheduleDeadlineWatch(id: String, taskActor: ActorRef, completionDeadline: DateTime): Cancellable = {
-    val timeToEscalation = new DTDuration(DateTime.now(), completionDeadline).getStandardMinutes
-    val minutes = timeToEscalation.minutes
-    log.debug(s"task $id has to be be completed in $minutes, schedule escalation")
-    context.system.scheduler.scheduleOnce(minutes, escalationService, Escalate(id, taskActor))
+  def escalation(taskId: String, role: Option[String], startDeadline: Option[DateTime], taskActor: ActorRef) = {
+    startDeadline.map { dl =>
+      val esc = context.actorOf(Escalalator.props)
+      esc ! InitEscalation(taskId, role, taskActor, dl)
+      esc
+    }
   }
 }
 
@@ -66,5 +65,5 @@ object TaskManager {
 
   def actorPath = s"/user/$actorName"
 
-  def props(escalationService: ActorRef) = Props(classOf[TaskManager], escalationService)
+  def props = Props[TaskManager]
 }

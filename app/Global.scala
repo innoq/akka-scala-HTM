@@ -5,7 +5,7 @@ import play.api.Play.current
 import play.api.libs.concurrent._
 import play.filters.gzip.GzipFilter
 import scala.concurrent.Future
-import service.escalation.EscalationService
+import service.escalation.Escalalator
 import service.org.OrgService
 import service.task.{ TaskListReadModelActor, TaskManager }
 
@@ -13,9 +13,8 @@ object Global extends WithFilters(new GzipFilter()) with GlobalSettings with Ren
 
   override def onStart(app: Application) {
     val orgService = Akka.system.actorOf(OrgService.props(), name = OrgService.actorName)
-    val taskList = Akka.system.actorOf(TaskListReadModelActor.props(orgService), name = TaskListReadModelActor.actorName)
-    val escService = Akka.system.actorOf(EscalationService.props(taskList), name = EscalationService.actorName)
-    Akka.system.actorOf(TaskManager.props(escService), name = TaskManager.actorName)
+    Akka.system.actorOf(TaskListReadModelActor.props(orgService), name = TaskListReadModelActor.actorName)
+    Akka.system.actorOf(TaskManager.props, name = TaskManager.actorName)
   }
 
   override def onBadRequest(request: RequestHeader, errorMsg: String) = {

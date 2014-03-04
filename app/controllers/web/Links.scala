@@ -37,9 +37,9 @@ case class Output(id: String) extends Link {
   def name = "output"
 }
 
-case object TaskList extends Link {
-  def link = routes.TaskView.list(None).url
-  def name = "list"
+case object Task extends Link {
+  def link = routes.TaskFlow.createTaskAction().url
+  def name = "task"
 }
 
 object Self {

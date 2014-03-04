@@ -18,8 +18,8 @@ trait TaskModel {
 object TaskModel {
   def apply(id: String,
     taskType: String,
-    startDeadline: Option[DateTime],
-    completionDeadline: Option[DateTime],
+    startDeadline: Option[DateTime] = None,
+    completionDeadline: Option[DateTime] = None,
     role: Option[String] = None,
     userId: Option[String] = None,
     delegatedUser: Option[String] = None,

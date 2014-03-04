@@ -3,7 +3,8 @@ package controllers
 import play.api._
 import play.api.mvc._
 import play.api.libs.json.Json
-import controllers.web.{ TaskList, Self, Hal, DefaultController }
+import controllers.web._
+import play.api.mvc.Accepting
 
 object Application extends DefaultController {
 
@@ -18,7 +19,7 @@ object Application extends DefaultController {
   }
 
   def halIndex = {
-    Ok(halLinks(Self(routes.Application.index().url), TaskList)).as(Hal.accept.mimeType)
+    Ok(halLinks(Self(routes.Application.index().url), Task)).as(Hal.accept.mimeType)
   }
 
   def html = {

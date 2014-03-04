@@ -28,6 +28,7 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
       goto(Reserved) using ProcessData(model) replying publishing(
         TaskClaimed(Reserved, model, reservedLinks(taskModel.id)))
     }
+
     case Event(ReClaim(userId), ProcessData(taskModel)) => {
       val model = taskModel.copy(userId = Some(userId))
       goto(Reserved) using ProcessData(model) replying publishing(
@@ -41,9 +42,11 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
     case Event(Start, data: ProcessData) =>
       goto(InProgress) replying publishing(
         TaskStarted(InProgress, data.taskData, inProgressLinks(data.taskId)))
+
     case Event(Release, ProcessData(model)) =>
       goto(Ready) using ProcessData(model) replying publishing(
         TaskReleased(Ready, model, readyLinks(model.id)))
+
     case Event(ReClaim(userId), ProcessData(model)) => {
       val uModel = model.copy(userId = Some(userId))
       stay using ProcessData(uModel) replying publishing(
@@ -59,9 +62,11 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
       goto(Completed) using ProcessData(newTaskData) replying publishing(
         TaskCompleted(Completed, newTaskData, NoLink))
     }
+
     case Event(Stop, ProcessData(taskData)) =>
       goto(Reserved) replying publishing(
         TaskStopped(Reserved, taskData, reservedLinks(taskData.id)))
+
     case Event(ReClaim(userId), ProcessData(taskData)) => {
       val newTaskData = taskData.copy(userId = Some(userId))
       goto(Reserved) using ProcessData(newTaskData) replying publishing(
@@ -80,6 +85,7 @@ class Task extends Actor with FSM[TaskState, Data] with ActorLogging {
   whenUnhandled {
     case Event(Skip, d) =>
       goto(Obsolete) using EmptyData(d.taskId) replying TaskSkipped(Obsolete, d.taskId, NoLink)
+
     case Event(cmd: Command, data) => {
       log.info(s"state transition not possible $cmd with data $data")
       stay using data replying publishing(InvalidCommandRejected(cmd, stateName, data.taskId))
