@@ -79,7 +79,7 @@ object TaskFlow extends DefaultController {
       case e: NoSuchTask => NotFound
       case e: InvalidCommandRejected => BadRequest {
         val err = error("task state transition not possible")
-        hal(err, Vector(SelfTask(e.taskId)))
+        hal(err, SelfTask(e.taskId).list)
       }
     }
   }

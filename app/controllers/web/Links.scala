@@ -9,6 +9,7 @@ object Link {
 sealed abstract class Link {
   def link: String
   def name: String
+  def list = Vector(this)
 }
 
 case class Assignee(id: String) extends Link {

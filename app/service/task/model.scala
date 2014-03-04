@@ -57,8 +57,10 @@ class TaskView(val taskModel: TaskModel, val taskState: TaskState) extends TaskM
   def delegatedUser = taskModel.delegatedUser
 }
 
-class TaskLinkView(taskModel: TaskModel, taskState: TaskState, val links: Vector[Link]) extends TaskView(taskModel, taskState) {
+class TaskLinkView(taskModel: TaskModel, taskState: TaskState, val links: Vector[Link]) extends TaskView(taskModel, taskState)
 
+class TaskLinkVersionView(taskModel: TaskModel, taskState: TaskState, links: Vector[Link], val version: Int) extends TaskLinkView(taskModel, taskState, links) {
+  def update(taskModel: TaskModel, taskState: TaskState, links: Vector[Link]) =
+    new TaskLinkVersionView(taskModel, taskState, links, version + 1)
 }
-
 case class FilteredTask(id: String, reason: String)
