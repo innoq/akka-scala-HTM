@@ -21,7 +21,7 @@ object TaskView extends DefaultController {
 
   def createResponse(task: TaskLinkVersionView)(implicit request: Request[_]) = {
     val etag = task.version.toString
-    withEtag(etag)(Ok(hal(task, SelfTask(task.id).list)))
+    withEtag(etag)(Ok(hal(task, SelfTask(task.id) +: task.links)))
   }
 
   def withEtag(etag: String)(result: => SimpleResult)(implicit request: Request[_]) = {
