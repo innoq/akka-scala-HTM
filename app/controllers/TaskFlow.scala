@@ -75,12 +75,13 @@ object TaskFlow extends DefaultController {
 
   def stateChange(taskId: String, msg: Command)(render: (TaskView, Vector[Link]) => SimpleResult) = {
     askDefault(taskManagerActor, TaskCommand(taskId, msg)) {
-      case e: TaskEvent => render(new TaskView(e.taskModel, e.state), e.links)
-      case e: NoSuchTask => NotFound
       case e: InvalidCommandRejected => Conflict {
         val err = error("task state transition not possible, please follow the link relations")
         hal(err, SelfTask(e.taskId).list)
       }
+      case e: TaskEvent => render(new TaskView(e.taskModel, e.state), e.links)
+      case e: NoSuchTask => NotFound
+
     }
   }
 }
