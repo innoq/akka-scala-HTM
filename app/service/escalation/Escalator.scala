@@ -24,32 +24,34 @@ case class EscalationData(id: String, completionDeadline: DateTime, cancel: Canc
 
 class Escalator extends Actor with ActorLogging with ActorDefaults {
 
+  import context.become
+
   def receive = {
     case InitEscalation(tId, tRole, esTaskActor, tStartDeadline, tCompletionDeadline) => {
-      log.info(s"init esclation $tId")
       val dl = tCompletionDeadline.get
       val cancel = scheduleCompletionWatch(tId, dl)
       esTaskActor ! SubscribeTransitionCallBack(self)
-      context.become(waitForTaskStateInit(EscalationData(tId, dl, cancel, tRole, esTaskActor, Created)))
+      become(waitForTaskStateInit(EscalationData(tId, dl, cancel, tRole, esTaskActor, Created)))
     }
   }
 
   def waitForTaskStateInit(data: EscalationData): Receive = {
     case CurrentState(self, state: TaskState) => {
-      log.info(s"escalation state update ${data.id} to $state")
-      context.become(updateTaskStateOrEscalate(data.copy(state = state)))
+      stayWithNewState(data, state)
     }
   }
 
   def updateTaskStateOrEscalate(data: EscalationData): Receive = {
     case Transition(actorRef, oldState, newState: TaskState) => {
-      log.info(s"escalation state update ${data.id} to $newState")
-      context.become(updateTaskStateOrEscalate(data.copy(state = newState)))
+      if (newState.isFinalState) {
+        log.debug(s"cancel deadline scheduler for task ${data.id}. Task is in final state $newState")
+        context.stop(self)
+      } else stayWithNewState(data, newState)
     }
+
     case Escalate(t) => {
-      log.info("escalate task: " + data.id)
-      val json = Json.toJson(
-        new TaskView(TaskModel(data.id, "generic", role = data.role, completionDeadline = Some(data.completionDeadline)), data.state))(DomainSerializers.taskViewWrites)
+      log.info(s"escalate task: ${data.id} in state ${data.state}")
+      val json = Json.toJson(toTaskView(data))(DomainSerializers.taskViewWrites)
       callWithRetry(WS.url("http://localhost:3000/escalation").put(Json.obj("task" -> json)))
         .map { response =>
           log.info(response.body)
@@ -70,8 +72,14 @@ class Escalator extends Actor with ActorLogging with ActorDefaults {
       //startDeadline.foreach(_._2.cancel())
       data.cancel.cancel()
     }
+  }
 
-    case e => log.info("whattts")
+  def stayWithNewState(data: EscalationData, state: TaskState) {
+    become(updateTaskStateOrEscalate(data.copy(state = state)))
+  }
+
+  def toTaskView(data: EscalationData): TaskView = {
+    new TaskView(TaskModel(data.id, "generic", role = data.role, completionDeadline = Some(data.completionDeadline)), data.state)
   }
 
   def buildReply(value: JsValue) = {
