@@ -8,8 +8,8 @@ class StartDeadlineEscalator extends BaseEscalator {
 
   def transition(data: EscalationData): Receive = {
     case Transition(actorRef, oldState, newState: TaskState) => {
-      if (newState.isFinalState) {
-        log.debug(s"cancel deadline scheduler for task ${data.id}. Task is in final state $newState")
+      if (newState.isClaimed || newState.isFinalState) {
+        log.debug(s"cancel deadline scheduler for task ${data.id}. Task is in state $newState")
         data.cancel.cancel()
       } else if (taskUnclaimed(newState)) {
         scheduleCompletionWatch(data.id, data.completionDeadline)

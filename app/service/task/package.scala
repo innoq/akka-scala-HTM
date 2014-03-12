@@ -17,13 +17,13 @@ package object task {
   case class NoSuchTask(id: String)
 
   // states:
-  sealed abstract class TaskState(val name: String, val isFinalState: Boolean)
-  case object Created extends TaskState("created", false)
-  case object Ready extends TaskState("ready", false)
-  case object Reserved extends TaskState("reserved", false)
-  case object InProgress extends TaskState("in progress", false)
-  case object Completed extends TaskState("completed", true)
-  case object Obsolete extends TaskState("obsolete", true)
+  sealed abstract class TaskState(val name: String, val isClaimed: Boolean, val isFinalState: Boolean)
+  case object Created extends TaskState("created", false, false)
+  case object Ready extends TaskState("ready", false, false)
+  case object Reserved extends TaskState("reserved", true, false)
+  case object InProgress extends TaskState("in progress", true, false)
+  case object Completed extends TaskState("completed", false, true)
+  case object Obsolete extends TaskState("obsolete", false, true)
 
   private[task] sealed abstract class Data {
     def taskId: String
