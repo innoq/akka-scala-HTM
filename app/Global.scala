@@ -5,7 +5,6 @@ import play.api.Play.current
 import play.api.libs.concurrent._
 import play.filters.gzip.GzipFilter
 import scala.concurrent.Future
-import service.escalation.Escalalator
 import service.org.OrgService
 import service.task.{ TaskListReadModelActor, TaskManager }
 

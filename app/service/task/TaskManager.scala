@@ -3,9 +3,9 @@ package service.task
 import akka.actor._
 import java.util.UUID
 import service.task.Task.Protocol.TaskDone
-import service.escalation.Escalalator.Protocol.{ StopEscalation, InitEscalation }
+import service.escalation.Escalator.Protocol.{ InitEscalation, StopEscalation }
 import scala.Some
-import service.escalation.Escalalator
+import service.escalation.Escalator
 import org.joda.time.DateTime
 
 private[task] case class TaskManageData(ref: ActorRef, escalator: Option[ActorRef])
@@ -24,7 +24,7 @@ class TaskManager extends Actor with ActorLogging {
       val taskId = UUID.randomUUID().toString
       taskActor forward Init(taskId, taskType, startDeadline, endDeadline, input, role, userId, delegateUser)
 
-      tasks = tasks + (taskId -> TaskManageData(taskActor, escalation(taskId, role, endDeadline, taskActor)))
+      tasks = tasks + (taskId -> TaskManageData(taskActor, escalation(taskId, role, startDeadline, endDeadline, taskActor)))
     }
     case TaskCommand(taskId, command) => {
       log.debug(s"forward command $command to task $taskId")
@@ -50,12 +50,10 @@ class TaskManager extends Actor with ActorLogging {
     }
   }
 
-  def escalation(taskId: String, role: Option[String], startDeadline: Option[DateTime], taskActor: ActorRef) = {
-    startDeadline.map { dl =>
-      val esc = context.actorOf(Escalalator.props)
-      esc ! InitEscalation(taskId, role, taskActor, dl)
-      esc
-    }
+  def escalation(taskId: String, role: Option[String], startDeadline: Option[DateTime], endDeadline: Option[DateTime], taskActor: ActorRef) = {
+    val esc = startDeadline.orElse(endDeadline).map(e => context.actorOf(Escalator.props))
+    esc.foreach(_ ! InitEscalation(taskId, role, taskActor, startDeadline, endDeadline))
+    esc
   }
 }
 
