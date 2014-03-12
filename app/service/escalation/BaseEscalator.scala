@@ -16,7 +16,7 @@ import play.api.libs.json.JsObject
 import akka.actor.FSM.SubscribeTransitionCallBack
 import service.escalation.BaseEscalator.Protocol._
 
-private[escalation] case class EscalationData(id: String, completionDeadline: DateTime, cancel: Cancellable,
+private[escalation] case class EscalationData(id: String, completionDeadline: DateTime, scheduledEscalation: Cancellable,
   role: Option[String], taskActor: ActorRef, state: TaskState)
 
 abstract class BaseEscalator extends Actor with ActorLogging with ActorDefaults {

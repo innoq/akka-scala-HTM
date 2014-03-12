@@ -10,6 +10,7 @@ class CompletionDeadlineEscalator extends BaseEscalator {
     case Transition(actorRef, oldState, newState: TaskState) => {
       if (newState.isFinalState) {
         log.debug(s"cancel deadline scheduler for task ${data.id}. Task is in final state $newState")
+        data.scheduledEscalation.cancel()
         context.stop(self)
       } else stayWithNewState(data, newState)
     }
