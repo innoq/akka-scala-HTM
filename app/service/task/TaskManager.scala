@@ -3,10 +3,10 @@ package service.task
 import akka.actor._
 import java.util.UUID
 import service.task.Task.Protocol.TaskDone
-import service.escalation.Escalator.Protocol.{ InitEscalation, StopEscalation }
 import scala.Some
-import service.escalation.Escalator
 import org.joda.time.DateTime
+import service.escalation.BaseEscalator.Protocol.InitEscalation
+import service.escalation.{ StartDeadlineEscalator, CompletionDeadlineEscalator }
 
 class TaskManager extends Actor with ActorLogging {
 
@@ -22,7 +22,7 @@ class TaskManager extends Actor with ActorLogging {
       val taskId = UUID.randomUUID().toString
       taskActor forward Init(taskId, taskType, startDeadline, endDeadline, input, role, userId, delegateUser)
 
-      escalation(taskId, role, startDeadline, endDeadline, taskActor)
+      scheduleEscalations(taskId, role, startDeadline, endDeadline, taskActor)
       tasks = tasks + (taskId -> taskActor)
     }
     case TaskCommand(taskId, command) => {
@@ -35,20 +35,24 @@ class TaskManager extends Actor with ActorLogging {
         case Some(ref) => ref forward command
       }
     }
-    case TaskDone(taskId, state, _) => {
-      tasks.get(taskId) match {
-        case None => {
-          log.error(s"task done handling of task $taskId failed (task not managed by task manager)")
-        }
-      }
-    }
+    //    case TaskDone(taskId, state, _) => {
+    //      tasks.get(taskId) match {
+    //        case None => {
+    //          log.error(s"task done handling of task $taskId failed (task not managed by task manager)")
+    //        }
+    //      }
+    //    }
   }
 
-  def escalation(taskId: String, role: Option[String], startDeadline: Option[DateTime], endDeadline: Option[DateTime], taskActor: ActorRef) = {
-    val esc = startDeadline.orElse(endDeadline).map(e => context.actorOf(Escalator.props))
-    esc.foreach(_ ! InitEscalation(taskId, role, taskActor, startDeadline, endDeadline))
-    esc
+  def scheduleEscalations(taskId: String, role: Option[String], startDeadline: Option[DateTime], endDeadline: Option[DateTime], taskActor: ActorRef) {
+    def planEscalation(deadline: Option[DateTime], props: Props) = {
+      deadline.map(dl => dl -> context.actorOf(props))
+        .foreach { case (dl, actor) => actor ! InitEscalation(taskId, role, taskActor, dl) }
+    }
+    planEscalation(startDeadline, StartDeadlineEscalator.props)
+    planEscalation(endDeadline, CompletionDeadlineEscalator.props)
   }
+
 }
 
 object TaskManager {
